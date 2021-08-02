@@ -1,32 +1,30 @@
-- [Download](#download)
-  - [Windows x64](#windows-x64)
-  - [Linux](#linux)
-- [Commands](#commands)
-  - [Configuration](#configuration)
-    - [Command: `add-config`](#command-add-config)
-    - [Configuration Storage](#configuration-storage)
-    - [Command: `get-configs`](#command-get-configs)
-    - [Command: `update-config`](#command-update-config)
-  - [Queues](#queues)
-    - [Command: `get-queues`](#command-get-queues)
-  - [Messages](#messages)
-    - [Command: `get-messages`](#command-get-messages)
-    - [Filter possibilites](#filter-possibilites)
-    - [Live-Streaming messages](#live-streaming-messages)
-    - [Command: `move-messages`](#command-move-messages)
-    - [Command: `purge-messages`](#command-purge-messages)
+- [RabbitCLI](#rabbitcli)
+  - [Download latest release](#download-latest-release)
+  - [Commands](#commands)
+    - [Configuration](#configuration)
+      - [Command: `add-config`](#command-add-config)
+      - [Configuration Storage](#configuration-storage)
+      - [Command: `get-configs`](#command-get-configs)
+      - [Command: `update-config`](#command-update-config)
+    - [Queues](#queues)
+      - [Command: `get-queues`](#command-get-queues)
+    - [Messages](#messages)
+      - [Command: `get-messages`](#command-get-messages)
+      - [Filter possibilites](#filter-possibilites)
+      - [Live-Streaming messages](#live-streaming-messages)
+      - [Command: `move-messages`](#command-move-messages)
+      - [Command: `purge-messages`](#command-purge-messages)
 
-# Download
-## Windows x64
-Google Drive: [Download](https://drive.google.com/drive/folders/1Iu_kTLrOomZIwmG4-YZszX0IeYsYKl-b?usp=sharing)
-## Linux
-> Coming soon
+# RabbitCLI
+## Download latest release
+See [release branch]() for all available releases.
+For installation just unzip the downloaded archive and either execute the `rabbitcli.exe` directly, or run the `install.ps1` script to copy the RabbitMQ CLI into `C:\Users\<YourName>\AppData\Local\RabbitCLI\rabbitcli.exe` and adding this path to your `PATH` environment variable.
 
-# Commands
-## Configuration
+## Commands
+### Configuration
 For management of different configurations, you can add, change and delete configurations.
 A configuration contains all information to establish a connection to a RabbitMQ host.
-### Command: `add-config`
+#### Command: `add-config`
 To create a new configuration, just call the `add-config` command and provide all required options.
 
 |Option|Example Value|Desription|
@@ -59,7 +57,7 @@ rabbitcli add-config --name configname \
     --web http://localhost:15672 \
     --amqp http://localhost:5672
 ```
-### Configuration Storage
+#### Configuration Storage
 The configuration is stored in a `json` file in your local user-profile folder (on windows systems: `C:\users\<your-name>\rabbitcli.json`)
 
 The configuration looks like:
@@ -71,7 +69,7 @@ The configuration looks like:
 ```
 The content of a configuration is stored encrypted and gets only decrypted when using the command. So your credentials are not persisted in plain-text.
 
-### Command: `get-configs`
+#### Command: `get-configs`
 With this command you can simply request what configurations currently exists on your system and output a single configuration. Options for this command:
 
 |Option|Example Value|Desription|
@@ -103,7 +101,7 @@ Result Example:
 ```
 The `get-configs` command will output the decrypted configuration with the password, so you can check what value is in there.
 
-### Command: `update-config`
+#### Command: `update-config`
 This command helps you change single values within a existing configuration.
 Providing the `--delete` option, you can delete a configuration.
 
@@ -118,8 +116,8 @@ rabbitcli update-config --name myConfig --delete
 > When you want to delete your `default` configuration, you have to provide the name explicitly.
 > You can then create a new default-config as usual 
 
-## Queues
-### Command: `get-queues`
+### Queues
+#### Command: `get-queues`
 The `get-queues` command has following options:
 |Option|Example Value|Description|
 |---|---|---|
@@ -160,8 +158,8 @@ rabbitcli get-queues --sort messages --desc --limit 10
 rabbitcli get-queues --qid 1098535bebc1
 ```
 
-## Messages
-### Command: `get-messages`
+### Messages
+#### Command: `get-messages`
 This are the options available for the `get-messages` command
 
 |Option|Example Value|Description|
@@ -177,7 +175,7 @@ This are the options available for the `get-messages` command
 |`--body`||Output body content of a single message. Only works in combination with `--hash` option|
 |`--live-view`||**EXPERIMENTAL**: Read more about this in below section "Live-Streaming messages"|
 
-### Filter possibilites
+#### Filter possibilites
 Here are some filter examples you can use:
 
 |Filter-Value|Result|
@@ -186,7 +184,7 @@ Here are some filter examples you can use:
 |`--filter "properties:SomeValue"`|`SomeValue` is searched in the properties: `AppId`, `ClusterId`, `ContentEncoding`, `ContentType`, `CorrelationId`, `Expiration`, `MessageId`, `ReplyTo` of a message|
 |`--filter "headers:SomeValue"`|`SomeValue` is searched in all headers of a message|
 
-### Live-Streaming messages
+#### Live-Streaming messages
 The live-streaming feature is currently in the experimental state, cause it was not yet tested until it's bullet-proof and it may lead to unexpected behaviour.
 
 **It's not recommended you use this on your production environment.**
@@ -203,7 +201,7 @@ After that, every message is fetched from that temporary queue and will get dire
 
 You can see a live-stream of messages in your console. This even works using a filter.
 
-### Command: `move-messages`
+#### Command: `move-messages`
 To move messages between queues, you can use the `move-messages` command. Here are the options you can provide:
 
 |Option|Example Value|Description|
@@ -234,7 +232,7 @@ rabbitcli move-messages \
   --filter "headers:Some error message"
 ```
 
-### Command: `purge-messages`
+#### Command: `purge-messages`
 You can purge messages from queues using the benefits known from other commands: filter and adressing single messages. Here are the options of the command:
 
 |Option|Example Value|Description|
