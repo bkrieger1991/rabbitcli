@@ -17,7 +17,7 @@
 
 # RabbitCLI
 ## Download latest release
-See [release branch]() for all available releases.
+See [release branch](https://github.com/bkrieger1991/rabbittools/tree/releases) for all available releases.
 For installation just unzip the downloaded archive and either execute the `rabbitcli.exe` directly, or run the `install.ps1` script to copy the RabbitMQ CLI into `C:\Users\<YourName>\AppData\Local\RabbitCLI\rabbitcli.exe` and adding this path to your `PATH` environment variable.
 
 ## Commands
