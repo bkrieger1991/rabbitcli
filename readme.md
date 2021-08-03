@@ -20,6 +20,15 @@
 See [release branch](https://github.com/bkrieger1991/rabbittools/tree/releases) for all available releases.
 For installation just unzip the downloaded archive and either execute the `rabbitcli.exe` directly, or run the `install.ps1` script to copy the RabbitMQ CLI into `C:\Users\<YourName>\AppData\Local\RabbitCLI\rabbitcli.exe` and adding this path to your `PATH` environment variable.
 
+## Development
+Just open the solution in VisualStudio. It's built with the VS 2019 Community edition, there is nothing special you have to do.
+To later execute and debug commands you have to provide debug-arguments.
+Otherwise, just run the terminal in the build output folder, to refer to the `rabbitcli.exe`.
+
+## Create a release
+Just execute the `publish-app-win-x64.ps1`. It will build, publish a self-contained single-file app and pack an archive also using the `install.ps1`.
+This archive can then be used to distribute the release.
+
 ## Commands
 ### Configuration
 For management of different configurations, you can add, change and delete configurations.
