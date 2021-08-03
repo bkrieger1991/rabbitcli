@@ -27,7 +27,7 @@ Just open the solution in VisualStudio. It's built with the VS 2019 Community ed
 To later execute and debug commands you have to provide debug-arguments.
 Otherwise, just run the terminal in the build output folder, to refer to the `rabbitcli.exe`.
 
-[![.NET](https://github.com/bkrieger1991/rabbittools/actions/workflows/git-actions.yml/badge.svg?branch=master)](https://github.com/bkrieger1991/rabbittools/actions/workflows/git-actions.yml)
+[![.NET](https://github.com/bkrieger1991/rabbittools/actions/workflows/dotnet.yml/badge.svg?branch=master)](https://github.com/bkrieger1991/rabbittools/actions/workflows/dotnet.yml)
 
 ## Create a release
 Just execute the `publish-app-win-x64.ps1`. It will build, publish a self-contained single-file app and pack an archive also using the `install.ps1`.
