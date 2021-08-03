@@ -1,5 +1,7 @@
 - [RabbitCLI](#rabbitcli)
   - [Download latest release](#download-latest-release)
+  - [Development](#development)
+  - [Create a release](#create-a-release)
   - [Commands](#commands)
     - [Configuration](#configuration)
       - [Command: `add-config`](#command-add-config)
