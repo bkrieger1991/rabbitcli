@@ -1,4 +1,5 @@
-[![.NET](https://github.com/bkrieger1991/rabbittools/actions/workflows/dotnet.yml/badge.svg?branch=master)](https://github.com/bkrieger1991/rabbittools/actions/workflows/dotnet.yml)
+[![.NET](https://github.com/bkrieger1991/rabbittools/actions/workflows/dotnet.yml/badge.svg)](https://github.com/bkrieger1991/rabbittools/actions/workflows/dotnet.yml)
+
 - [RabbitCLI](#rabbitcli)
   - [Download latest release](#download-latest-release)
   - [Development](#development)
