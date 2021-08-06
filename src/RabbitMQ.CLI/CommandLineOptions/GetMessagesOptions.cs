@@ -15,7 +15,7 @@ namespace RabbitMQ.CLI.CommandLineOptions
         public bool LiveView { get; set; }
 
         [Option("body", Required = false, HelpText = "Outputs the message body instead of information about the message itself.")]
-        public bool Content { get; set; }
+        public bool ContentOnly { get; set; }
         
         [Option("hash", Required = false, HelpText = "Provide a message hash, to focus information output to that single message.")]
         public string Hash { get; set; }

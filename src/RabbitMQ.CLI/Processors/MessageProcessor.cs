@@ -177,6 +177,17 @@ namespace RabbitMQ.CLI.Processors
         {
             var messages = await _rmqClient.GetMessages(queueName, options.Limit, options.Filter);
 
+            if (options.ContentOnly)
+            {
+                var output = JsonConvert.SerializeObject(messages.Select(m => 
+                    m.ContentType?.Contains("application/json") == true
+                    ? (object) JsonConvert.DeserializeObject<Dictionary<string, object>>(m.Content)
+                    : m.Content).ToArray(), Formatting.Indented);
+
+                Console.WriteLine(output);
+                return;
+            }
+
             if (options.OutputJsonList)
             {
                 var text = JsonConvert.SerializeObject(messages, Formatting.Indented);
@@ -190,7 +201,11 @@ namespace RabbitMQ.CLI.Processors
         private async Task OutputSingleMessage(GetMessagesOptions options, string queueName)
         {
             var message = await _rmqClient.GetMessage(queueName, options.Hash);
-            if (options.Content)
+            if(message is null)
+            {
+                Console.WriteLine("No message found.");
+            }
+            if (options.ContentOnly)
             {
                 Console.WriteLine(message.Content, ConsoleColors.JsonColor);
             }
