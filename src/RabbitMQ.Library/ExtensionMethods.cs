@@ -15,7 +15,10 @@ namespace RabbitMQ.Library
     {
         public static IServiceCollection AddRabbitMqLibraryComponents(this IServiceCollection services)
         {
-            services.AddSingleton<ConfigurationManager>();
+            var configManager = new ConfigurationManager();
+            configManager.Initialize();
+            services.AddSingleton(configManager);
+
             services.AddSingleton<RabbitMqClient>();
             services.AddAutoMapper(cfg => cfg.AddMaps(typeof(MessageMapping).Assembly));
 
