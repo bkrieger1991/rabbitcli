@@ -150,7 +150,7 @@ namespace RabbitMQ.Library.Configuration
             return JsonConvert.SerializeObject(dict);
         }
 
-        private string SerializeConfigCollection(Dictionary<string, RabbitMqConfiguration> configCollection)
+        private Dictionary<string, string> SerializeConfigCollection(Dictionary<string, RabbitMqConfiguration> configCollection)
         {
             var encryptedConfigs = configCollection
                 .Select(kv =>
@@ -160,7 +160,7 @@ namespace RabbitMQ.Library.Configuration
                     ))
                 .ToDictionary(kv => kv.Key, kv => kv.Value);
 
-            return JsonConvert.SerializeObject(encryptedConfigs);
+            return encryptedConfigs;
         }
 
         private Configuration DeserializeConfiguration(string json)
@@ -177,8 +177,10 @@ namespace RabbitMQ.Library.Configuration
             }
             var props = typeof(Configuration).GetProperties();
             props.Where(p => p.Name != nameof(config.ConfigurationCollection)).ToList().ForEach(p => p.SetValue(config, dict[p.Name]));
-            var jobject = dict[nameof(config.ConfigurationCollection)];
-            var encryptedDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(JsonConvert.SerializeObject(jobject));
+            
+            // Value in key "ConfigurationCollection" is a JObject, convert it into Dict<string,string> to better handle it
+            var collection = dict[nameof(config.ConfigurationCollection)];
+            var encryptedDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(JsonConvert.SerializeObject(collection));
             config.ConfigurationCollection = DeserializeConfigCollection(encryptedDict);
             
             return config;

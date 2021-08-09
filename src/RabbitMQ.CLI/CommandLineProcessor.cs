@@ -29,14 +29,16 @@ namespace RabbitMQ.CLI
                         AddConfigOptions, 
                         UpdateConfigOptions, 
                         GetConfigOptions,
+                        ConfigurePropertyOptions,
                         GetQueuesOptions,
                         GetMessagesOptions,
                         PurgeMessagesOptions,
                         MoveMessagesOptions
-                    >(args).MapResult(
+                >(args).MapResult(
                         (AddConfigOptions o) => _configProcessor.AddConfig(o),
                         (UpdateConfigOptions o) => _configProcessor.UpdateConfig(o),
                         (GetConfigOptions o) => _configProcessor.GetConfigs(o),
+                        (ConfigurePropertyOptions o) => _configProcessor.ConfigureProperty(o),
                         (GetQueuesOptions o) => _queueProcessor.GetQueues(o),
                         (GetMessagesOptions o) => _messageProcessor.GetMessages(o),
                         (PurgeMessagesOptions o) => _messageProcessor.PurgeMessages(o),

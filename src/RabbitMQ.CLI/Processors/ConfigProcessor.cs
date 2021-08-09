@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using ConsoleTables;
 using Newtonsoft.Json;
 using RabbitMQ.CLI.CommandLineOptions;
 using RabbitMQ.Library.Configuration;
@@ -12,9 +13,9 @@ namespace RabbitMQ.CLI.Processors
     {
         private readonly ConfigurationManager _configManager;
 
-        public ConfigProcessor(ConfigurationManager _configManager)
+        public ConfigProcessor(ConfigurationManager configManager)
         {
-            this._configManager = _configManager;
+            _configManager = configManager;
         }
 
         public Task<int> AddConfig(AddConfigOptions options)
@@ -81,6 +82,34 @@ namespace RabbitMQ.CLI.Processors
 
             var configKeys = _configManager.GetConfigurationKeys();
             configKeys.ToList().ForEach(Console.WriteLine);
+            return Task.FromResult(0);
+        }
+
+        public Task<int> ConfigureProperty(ConfigurePropertyOptions options)
+        {
+            if (options.GetProperties)
+            {
+                var props = typeof(Configuration).GetProperties()
+                    .Where(p => p.Name != nameof(Configuration.ConfigurationCollection))
+                    .ToList();
+
+                var table = new ConsoleTable("Property", "Current value");
+                props.ForEach(p => table.AddRow(p.Name, _configManager.GetProperty(p.Name)));
+
+                table.Write();
+                return Task.FromResult(0);
+            }
+
+            if (!string.IsNullOrWhiteSpace(options.SetProperty))
+            {
+                if (string.IsNullOrWhiteSpace(options.Value))
+                {
+                    throw new Exception("You have to provide a value in order to set a configuration property");
+                }
+
+                _configManager.SetProperty(options.SetProperty, options.Value);
+            }
+
             return Task.FromResult(0);
         }
     }
