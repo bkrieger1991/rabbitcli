@@ -182,7 +182,7 @@ namespace RabbitMQ.Library
             await IterateMessages(
                 queue,
                 null,
-                1,
+                0,
                 (_, msg) =>
                 {
                     var mappedMessage = _mapper.Map<AmqpMessage>(msg);
@@ -308,6 +308,42 @@ namespace RabbitMQ.Library
             }
         }
 
+        public async Task UpdateMessage(string queue, AmqpMessage updatedMessage)
+        {
+            // Create temporary exchange for later publishing a new message to the queue
+            using var connection = _amqpConnectionFactory.CreateConnection();
+            using var exchangeModel = connection.CreateModel();
+            try
+            {
+                using var tempExchange = TemporaryExchange.Create(exchangeModel).BindTo(queue);
+                await IterateMessages(
+                    queue,
+                    null,
+                    0,
+                    (model, msg) =>
+                    {
+                        var mappedMessage = _mapper.Map<AmqpMessage>(msg);
+                        if (mappedMessage.Identifier == updatedMessage.Identifier)
+                        {
+                            // Build new message based on values in updatedMessage
+                            // Get encoding of message to encode the body correct
+                            var encoding = TryGetEncoding(msg.BasicProperties.ContentEncoding);
+
+                            tempExchange.Publish(msg.BasicProperties, encoding.GetBytes(updatedMessage.Content), msg.RoutingKey);
+
+                            // Acknowledge "old" message to delete it
+                            model.BasicAck(msg.DeliveryTag, false);
+                        }
+                    }
+                );
+            }
+            finally
+            {
+                exchangeModel.Close();
+                connection.Close();
+            }
+        }
+
         public async Task DeleteQueue(string name)
         {
             var queue = await _apiClient.GetQueueAsync(name, _vhost);
@@ -430,6 +466,18 @@ namespace RabbitMQ.Library
             var queueInfo = new QueueInfo(name, autoDelete, durable, inputArgs);
 
             return await _apiClient.CreateQueueAsync(queueInfo, _vhost);
+        }
+
+        private Encoding TryGetEncoding(string name, Encoding fallback = null)
+        {
+            try
+            {
+                return Encoding.GetEncoding(name);
+            }
+            catch
+            {
+                return fallback ?? Encoding.UTF8;
+            }
         }
 
         private async Task ValidateArguments(QueueCreateArgument[] arguments)
