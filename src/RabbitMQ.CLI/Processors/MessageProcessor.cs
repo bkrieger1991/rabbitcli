@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +11,7 @@ using Newtonsoft.Json;
 using RabbitMQ.CLI.CommandLineOptions;
 using RabbitMQ.Library;
 using RabbitMQ.Library.Configuration;
+using RabbitMQ.Library.Helper;
 using RabbitMQ.Library.Models;
 using Console = Colorful.Console;
 
@@ -25,6 +28,7 @@ namespace RabbitMQ.CLI.Processors
             _rmqClient = rmqClient;
             _configManager = configManager;
             _cts = new CancellationTokenSource();
+
         }
 
         public async Task<int> GetMessages(GetMessagesOptions options)
@@ -90,6 +94,67 @@ namespace RabbitMQ.CLI.Processors
 
             await _rmqClient.TransferMessages(fromName, toName, options.Filter, options.Limit, options.Copy);
 
+            return 0;
+        }
+
+        public async Task<int> EditMessage(EditMessageOptions options)
+        {
+            var config = _configManager.Get(options.ConfigName);
+            _rmqClient.SetConfig(config);
+            var queueName = await GetQueueNameFromOptions(options.QueueName, options.QueueId, config);
+            var editor = _configManager.GetProperty(nameof(Configuration.TextEditorPath));
+            if (editor == "notepad")
+            {
+                Console.WriteLine("Note that you can configure the editor of your choice with:" +
+                                  "\n\trabbitcli --set texteditorpath --value \"editor\"");
+            }
+
+            var message = await _rmqClient.GetMessage(queueName, options.Hash);
+
+            if (message is null)
+            {
+                throw new Exception($"No message found with given hash: {options.Hash} in queue {queueName}");
+            }
+
+            // Store message content in a temporary file path
+            var tempPath = Path.GetTempFileName();
+
+            try
+            {
+                await File.WriteAllTextAsync(tempPath, message.Content);
+
+                // Open the file in the configured editor
+                var command = $"/C {_configManager.GetProperty(nameof(Configuration.TextEditorPath))} {tempPath}";
+                Process.Start("cmd.exe", command);
+
+                Console.WriteLine("The message was opened in your configured editor." +
+                                  "\nWhen the file gets saved changed, the message will be re-published with modified content." +
+                                  "\nWaiting for file changes... Press CTRL+C to cancel", ConsoleColors.HighlightColor);
+                Console.CancelKeyPress += CancellationHandler;
+                // Wait until the file got saved
+                var watcher = new FileSystemWatcher(Path.GetDirectoryName(tempPath) ?? "", Path.GetFileName(tempPath));
+                var result = await watcher.WaitForChangedAsync(_cts.Token);
+                await watcher.DisposeAsync();
+                await Task.Delay(500);
+                if (result != null)
+                {
+                    Console.WriteLine("Message content were changed, now updating the message...");
+                    var newContent = await File.ReadAllTextAsync(tempPath);
+                    message.Content = newContent;
+                    await _rmqClient.UpdateMessage(queueName, message);
+
+                    Console.WriteLine("Message updated. Please note, that the hash may have changed, cause of modified body.", ConsoleColors.JsonColor);
+                }
+                else
+                {
+                    Console.WriteLine("You cancelled the process.");
+                }
+            }
+            finally
+            {
+                File.Delete(tempPath);
+            }
+            
             return 0;
         }
 
@@ -168,7 +233,7 @@ namespace RabbitMQ.CLI.Processors
 
         private void CancellationHandler(object sender, ConsoleCancelEventArgs args)
         {
-            Console.WriteLine("Cancelling...but first cleaning up...");
+            Console.WriteLine("Cancelling...");
             _cts.Cancel();
             args.Cancel = true;
         }

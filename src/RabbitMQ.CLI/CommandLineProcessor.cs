@@ -25,6 +25,8 @@ namespace RabbitMQ.CLI
         {
             try
             {
+                // Gets a bit dirty...
+                // TODO: Is there a better way registering all commands?
                 await Parser.Default.ParseArguments<
                         AddConfigOptions, 
                         UpdateConfigOptions, 
@@ -33,7 +35,8 @@ namespace RabbitMQ.CLI
                         GetQueuesOptions,
                         GetMessagesOptions,
                         PurgeMessagesOptions,
-                        MoveMessagesOptions
+                        MoveMessagesOptions,
+                        EditMessageOptions
                 >(args).MapResult(
                         (AddConfigOptions o) => _configProcessor.AddConfig(o),
                         (UpdateConfigOptions o) => _configProcessor.UpdateConfig(o),
@@ -43,6 +46,7 @@ namespace RabbitMQ.CLI
                         (GetMessagesOptions o) => _messageProcessor.GetMessages(o),
                         (PurgeMessagesOptions o) => _messageProcessor.PurgeMessages(o),
                         (MoveMessagesOptions o) => _messageProcessor.MoveMessages(o),
+                        (EditMessageOptions o) => _messageProcessor.EditMessage(o),
                         err => Task.FromResult(-1)
                     );
             }
