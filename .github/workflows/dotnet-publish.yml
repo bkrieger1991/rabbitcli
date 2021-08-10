@@ -17,12 +17,24 @@ jobs:
       run: dotnet build --no-restore RabbitMQ.Toolbox.sln
     - name: Test
       run: dotnet test --no-build RabbitMQ.Toolbox.sln
+    - name: Save Build Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: build
+        path: ./
   publish-windows:
     needs: build
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/download-artifact@v2
+      with:
+        name: build
+        path: project-files
+    - name: Display structure of build files
+      run: ls -laR
+      working-directory: ./project-files
     - name: Publish application for win-x64
-      run: dotnet publish --no-build --self-contained true -r win-x64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true src/RabbitMQ.CLI/RabbitMQ.CLI.csproj -o ./publish
+      run: dotnet publish --no-build --self-contained true -r win-x64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true project-files/src/RabbitMQ.CLI/RabbitMQ.CLI.csproj -o ./publish
     - name: Display structure of published files
       run: ls -laR
       working-directory: ./publish
