@@ -1,9 +1,13 @@
 [![.NET](https://github.com/bkrieger1991/rabbittools/actions/workflows/dotnet.yml/badge.svg)](https://github.com/bkrieger1991/rabbittools/actions/workflows/dotnet.yml)
 [![Publish Windows-x64](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish.yml/badge.svg)](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish.yml)
 
+- [What is RabbitCLI?](#what-is-rabbitcli)
 - [Download latest release](#download-latest-release)
-- [Development](#development)
-- [Create a release](#create-a-release)
+    - [See release branch for all available releases](#see-release-branch-for-all-available-releases)
+  - [Installation](#installation)
+- [Contribution & Development](#contribution--development)
+  - [Pull request into `master`](#pull-request-into-master)
+  - [Create a release](#create-a-release)
 - [Commands](#commands)
   - [Configuration](#configuration)
     - [Command: `add-config`](#command-add-config)
@@ -21,17 +25,32 @@
     - [Command: `purge-messages`](#command-purge-messages)
     - [Command: `edit-message`](#command-edit-message)
 
-# Download latest release
-See [release branch](https://github.com/bkrieger1991/rabbittools/tree/releases) for all available releases.
-For installation just unzip the downloaded archive and either execute the `rabbitcli.exe` directly, or run the `install.ps1` script to copy the RabbitMQ CLI into `C:\Users\<YourName>\AppData\Local\RabbitCLI\rabbitcli.exe` and adding this path to your `PATH` environment variable.
+# What is RabbitCLI?
+Rabbit CLI should help you to perform tasks with a RabbitMQ instance, you can't do with the Management UI addon.
 
-# Development
-Just open the solution in VisualStudio. It's built with the VS 2019 Community edition, there is nothing special you have to do.
+This CLI tool helps fetching messages with extended filter functionality, editing messages in queues, moving messages from queue A to B (even with filter functionality), purging messages with a filter applied and more.
+
+It allows you to configure more than one instance, to e.g. perform actions on your local development instance as well on your staging or productive environment.
+
+It's written in C# .NET 5.0 and available for download in the branch `releases`.
+
+# Download latest release
+### See [release branch](https://github.com/bkrieger1991/rabbittools/tree/releases) for all available releases
+
+## Installation
+Just unzip the downloaded archive and either invoke a command (described below) on the `rabbitcli.exe` directly or run the `install.ps1` script to copy the RabbitMQ CLI into `C:\Users\<YourName>\AppData\Local\RabbitCLI\rabbitcli.exe` and adding this path to your user's `PATH` environment variable.
+
+# Contribution & Development
+Feel free to contribute. Just open the solution in VisualStudio. It's built with the VS 2019 Community edition, there is nothing special you have to do.
+
 To later execute and debug commands you have to provide debug-arguments.
 Otherwise, just run the terminal in the build output folder, to refer to the `rabbitcli.exe`.
 
-# Create a release
-Covered by GitHub Actions which will automatically push new versions to releases branch.
+## Pull request into `master`
+The `master` branch is locked and can only be changed using pull-requests.
+
+## Create a release
+Creating new release-versions is covered by GitHub Actions which will automatically push new archive-versions to `releases` branch.
 
 # Commands
 ## Configuration
@@ -42,10 +61,10 @@ To create a new configuration, just call the `add-config` command and provide al
 
 |Option|Example Value|Desription|
 |---|---|---|
-|`--username`|*guest*|A username, permitted to access RabbitMQ Management API and perform AMQP Actions|
+|`--username`|*guest*|A username, permitted to access<br>RabbitMQ Management API and perform AMQP Actions|
 |`--password`|*guest*|The password of your user|
-|`--vhost`|"*/*" or *youHost*|The virtualhost you want to connect to. If you want to manage different virtual-hosts, you have to create different configurations.|
-|`--web`|*http://localhost:15672*|The address of your management api (if you have enabled SSL, use `https`)|
+|`--vhost`|"*/*" or *youHost*|The virtualhost you want to connect to.<br>If you want to manage different virtual-hosts,<br>you have to create different configurations.|
+|`--web`|*http://localhost:15672*|The address of your management api<br>(if you have enabled SSL, use `https`)|
 |`--amqp`|*amqp://localhost:5672*|The address for AMQP connections|
 |`--name`|*myConfig*|Name of you configuration.|
 
@@ -150,9 +169,9 @@ rabbitcli --set "texteditorpath" --value "code"
 The `get-queues` command has following options:
 |Option|Example Value|Description|
 |---|---|---|
-|`-c` or `--config`|*myConfig*|The configuration you want to use. Defaults to `default` config.|
+|`-c` or `--config`|*myConfig*|The configuration you want to use.<br>Defaults to `default` config.|
 |`--queue`|*"my.queue.name"*|Show details of a queue providing it's name|
-|`--qid`|*1098535bebc1*|Show details of a queue providing it's ID (only generated by rabbitcli)|
+|`--qid`|*1098535bebc1*|Show details of a queue providing it's ID<br>(only generated by rabbitcli)|
 |`--sort`|*messages*|Sort list of queues by a certain property|
 |`--desc`||Used together with `--sort`, orders the results descending|
 |`--limit`|*10*|Limit your list of queues to an amount|
@@ -193,16 +212,16 @@ This are the options available for the `get-messages` command
 
 |Option|Example Value|Description|
 |---|---|---|
-|`-c` or `--config`|*myConfig*|The configuration you want to use. Defaults to `default` config.|
-|`--qid`|*1098535bebc1*|The ID of the queue you want to fetch messages from (alternative to `--queue`|
-|`--queue`|*My.Queue.Name*|The name of the queue you want to fetch messages from (alternative to `--qid`)
-|`--headers`||Provide this option if you want to show headers in the result view of messages|
+|`-c` or `--config`|*myConfig*|The configuration you want to use.<br>Defaults to `default` config.|
+|`--qid`|*1098535bebc1*|The ID of the queue you want to fetch messages from<br>(alternative to `--queue`|
+|`--queue`|*My.Queue.Name*|The name of the queue you want to fetch messages from<br>(alternative to `--qid`)
+|`--headers`||Provide this option if you want to show headers in the <br>result view of messages|
 |`--limit`|*10*|Limit the result of messages to a defined amount|
-|`--filter`|*Any value*|Filter a string within the message (also the message-body). See filter possibilites for further explanation|
+|`--filter`|*Any value*|Filter a string within the message (also the message-body).<br>See filter possibilites for further explanation|
 |`--json`||Output messages as json array, to better analyze contents|
-|`--hash`||Provide a message-hash (shown in result list view) to fetch details about a single message|
-|`--body`||Output body content of a single message. Only works in combination with `--hash` option|
-|`--live-view`||**EXPERIMENTAL**: Read more about this in below section "Live-Streaming messages"|
+|`--hash`||Provide a message-hash (shown in result list view) to fetch details<br>about a single message|
+|`--body`||Output body content of a single message. <br>Only works in combination with `--hash` option|
+|`--live-view`||**EXPERIMENTAL**: Read more about this in below section<br>[Live-Streaming messages](#live-streaming-messages)|
 
 ### Filter possibilites
 Here are some filter examples you can use:
@@ -210,7 +229,7 @@ Here are some filter examples you can use:
 |Filter-Value|Result|
 |---|---|
 |`--filter "My Text"`|`My Text` is searched within the body of a message|
-|`--filter "properties:SomeValue"`|`SomeValue` is searched in the properties: `AppId`, `ClusterId`, `ContentEncoding`, `ContentType`, `CorrelationId`, `Expiration`, `MessageId`, `ReplyTo` of a message|
+|`--filter "properties:SomeValue"`|`SomeValue` is searched in the properties of a message:<br>`AppId`, `ClusterId`, `ContentEncoding`, `ContentType`,<br>`CorrelationId`, `Expiration`, `MessageId`, `ReplyTo`|
 |`--filter "headers:SomeValue"`|`SomeValue` is searched in all headers of a message|
 
 ### Live-Streaming messages
@@ -235,15 +254,15 @@ To move messages between queues, you can use the `move-messages` command. Here a
 
 |Option|Example Value|Description|
 |---|---|---|
-|`-c` or `--config`|*myConfig*|The configuration you want to use. Defaults to `default` config.|
-|`--from-qid`|*1098535bebc1*|The ID of the queue you want to move messages from (alternative to `--from`)|
-|`--from`|*My.Queue.Name*|The name of the queue you want to move messages from (alternative to `--from-qid`)
-|`--to-qid`|*1098535bebc1*|The ID of the queue you want to move messages to (alternative to `--to`). Not working with `--new`|
-|`--to`|*My.Queue.Name*|The name of the queue you want to move messages to (alternative to `--to-qid`)
-|`--new`||When using this option, the queue defined in `--to` will be created first.|
-|`--copy`||Messages are not getting removed from the source-queue in `--from`|
+|`-c` or `--config`|*myConfig*|The configuration you want to use.<br>Defaults to `default` config.|
+|`--from-qid`|*1098535bebc1*|The ID of the queue you want to move messages from<br>(alternative to `--from`)|
+|`--from`|*My.Queue.Name*|The name of the queue you want to move messages from<br>(alternative to `--from-qid`)
+|`--to-qid`|*1098535bebc1*|The ID of the queue you want to move messages to<br>(alternative to `--to`). Not working with `--new`|
+|`--to`|*My.Queue.Name*|The name of the queue you want to move messages to<br>(alternative to `--to-qid`)
+|`--new`||When using this option, the queue defined in<br>`--to` will be created first.|
+|`--copy`||Messages are not getting removed from <br>the source-queue in `--from`|
 |`--limit`|*10*|Limit the amount of messages getting moved|
-|`--filter`|*Any value*|Filter a string within the message (also the message-body). See filter possibilites for further explanation|
+|`--filter`|*Any value*|Filter a string within the message (also the message-body).<br>See filter possibilites for further explanation|
 
 **Move messages from one queue to another**
 ```
@@ -266,11 +285,11 @@ You can purge messages from queues using the benefits known from other commands:
 
 |Option|Example Value|Description|
 |---|---|---|
-|`-c` or `--config`|*myConfig*|The configuration you want to use. Defaults to `default` config.|
-|`--qid`|*1098535bebc1*|The ID of the queue you want to purge messages from (alternative to `--queue`)|
-|`--queue`|*My.Queue.Name*|The name of the queue you want to purge messages from (alternative to `--qid`)|
-|`--filter`|*Any value*|Filter a string within the message (also the message-body). See filter possibilites for further explanation|
-|`--hash`||Provide a message-hash (shown in result list view) to purge only that message|
+|`-c` or `--config`|*myConfig*|The configuration you want to use.<br>Defaults to `default` config.|
+|`--qid`|*1098535bebc1*|The ID of the queue you want to purge messages from<br>(alternative to `--queue`)|
+|`--queue`|*My.Queue.Name*|The name of the queue you want to purge messages from<br>(alternative to `--qid`)|
+|`--filter`|*Any value*|Filter a string within the message (also the message-body).<br>See filter possibilites for further explanation|
+|`--hash`||Provide a message-hash (shown in result list view) to<br>purge only that message|
 
 **WARNING ABOUT USING `--hash`**: The hash of a message is calculated using the body and some properties, available in native RabbitMQ. If the body and the values of those message-properties are **identical** to another message, the hashes also equals.
 
@@ -281,9 +300,9 @@ You can edit the **content** of a message in a queue. For this you can use the `
 
 |Option|Example Value|Description|
 |---|---|---|
-|`-c` or `--config`|*myConfig*|The configuration you want to use. Defaults to `default` config.|
-|`--qid`|*1098535bebc1*|The ID of the queue you want to purge messages from (alternative to `--queue`)|
-|`--queue`|*My.Queue.Name*|The name of the queue you want to purge messages from (alternative to `--qid`)|
+|`-c` or `--config`|*myConfig*|The configuration you want to use.<br>Defaults to `default` config.|
+|`--qid`|*1098535bebc1*|The ID of the queue you want to purge messages from<br>(alternative to `--queue`)|
+|`--queue`|*My.Queue.Name*|The name of the queue you want to purge messages from<br>(alternative to `--qid`)|
 |`--hash`|*8130d8764f31*|Provide a hash that identifies a message.|
 
 This command will make use of the configured property `TextEditorPath`. The set value tells rabbitcli which editor it should open in order to edit the message-content. The configured default is `notepad`. 
