@@ -10,6 +10,7 @@
       - [Configuration Storage](#configuration-storage)
       - [Command: `get-configs`](#command-get-configs)
       - [Command: `update-config`](#command-update-config)
+      - [Command: `config-property`](#command-config-property)
     - [Queues](#queues)
       - [Command: `get-queues`](#command-get-queues)
     - [Messages](#messages)
@@ -18,6 +19,7 @@
       - [Live-Streaming messages](#live-streaming-messages)
       - [Command: `move-messages`](#command-move-messages)
       - [Command: `purge-messages`](#command-purge-messages)
+      - [Command: `edit-message`](#command-edit-message)
 
 # RabbitCLI
 ## Download latest release
