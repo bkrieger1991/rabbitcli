@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using FluentAssertions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RabbitMQ.Library.Configuration;
 using Xunit;
 
@@ -58,16 +59,16 @@ namespace RabbitMQ.Library.Test
         [Fact]
         public void Should_Store_Configuration()
         {
-            var config = $"{{\"TextEditorPath\":\"unit-test\", \"ConfigurationCollection\":{{}}}}";
+            var config = "{{\"TextEditorPath\":\"unit-test\", \"ConfigurationCollection\":{{}}}}";
             var manager = new MockConfigurationManager(config);
             manager.Initialize();
 
             manager.AddConfiguration(new RabbitMqConfiguration() {Name = "unit-test-config"});
 
-            var deserialized = JsonConvert.DeserializeObject<Dictionary<string, string>>(manager.WrittenConfig);
+            var deserialized = JsonConvert.DeserializeObject<Dictionary<string, object>>(manager.WrittenConfig);
             var key = nameof(Configuration.Configuration.ConfigurationCollection);
             deserialized.Should().ContainKey(key);
-            var configDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(deserialized[key]);
+            var configDict = JsonConvert.DeserializeObject<Dictionary<string, string>>((deserialized[key] as JObject).ToString());
             configDict.Should().ContainKey("unit-test-config");
         }
     }
