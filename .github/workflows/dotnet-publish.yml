@@ -24,7 +24,7 @@ jobs:
       with:
         name: publish-win-x64
         path: ./publish/
-  pack-releases:
+  push-releases:
     needs: publish-win-x64
     runs-on: ubuntu-latest
     steps:
@@ -38,8 +38,8 @@ jobs:
     - uses: papeloto/action-zip@v1
       name: Pack published files for win-x64
       with:
-        files: publish/rabbitcli.exe publish/install.ps1
-        dest: RabbitCLI-"`date +"%Y%m%d%H%M%S"`".zip
+        files: win-x64/rabbitcli.exe win-x64/install.ps1
+        dest: RabbitCLI-`date +"%Y%m%d%H%M%S"`.zip
     - uses: actions/checkout@v2
       name: Checkout releases branch
       with:
@@ -54,4 +54,6 @@ jobs:
         delete-branch: true
         branch: release/rabbitcli
         title: New Release of RabbitCLI
+        body: |
+          Adds new release-package
   
