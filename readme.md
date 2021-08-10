@@ -129,6 +129,22 @@ rabbitcli update-config --name myConfig --delete
 > When you want to delete your `default` configuration, you have to provide the name explicitly.
 > You can then create a new default-config as usual 
 
+#### Command: `config-property`
+This command can set configuration properties used, to configure the general behaviour of the rabbitcli.
+
+List of options:
+
+|Option|Example Value|Desription|
+|---|---|---|
+|`--list`||Outputs a list of all properties available and the current value|
+|`--set`|*propertyname*|Provide a property-name to set a new value|
+|`--value`|*yourValue*|When a property-name was provided, you also need to provide a value|
+
+**Example of configuring an alternative text editor for editing messages**
+```
+rabbitcli --set "texteditorpath" --value "code"
+```
+
 ### Queues
 #### Command: `get-queues`
 The `get-queues` command has following options:
@@ -259,3 +275,26 @@ You can purge messages from queues using the benefits known from other commands:
 **WARNING ABOUT USING `--hash`**: The hash of a message is calculated using the body and some properties, available in native RabbitMQ. If the body and the values of those message-properties are **identical** to another message, the hashes also equals.
 
 **Purging a message using the `--hash` option will purge all messages where the calculated hash matches**
+
+#### Command: `edit-message`
+You can edit the **content** of a message in a queue. For this you can use the `edit-message` command with following options:
+
+|Option|Example Value|Description|
+|---|---|---|
+|`-c` or `--config`|*myConfig*|The configuration you want to use. Defaults to `default` config.|
+|`--qid`|*1098535bebc1*|The ID of the queue you want to purge messages from (alternative to `--queue`)|
+|`--queue`|*My.Queue.Name*|The name of the queue you want to purge messages from (alternative to `--qid`)|
+|`--hash`|*8130d8764f31*|Provide a hash that identifies a message.|
+
+This command will make use of the configured property `TextEditorPath`. The set value tells rabbitcli which editor it should open in order to edit the message-content. The configured default is `notepad`. 
+
+**Edit a message with hash "8130d8764f31" using the default configuration**
+```
+rabbitcli edit-message --queue My.Queue --hash 8130d8764f31
+```
+
+
+If you wish to use another editor, feel free to update the value to use for e.g. VS Code:
+```
+rabbitcli --set texteditorpath --value "code"
+```
