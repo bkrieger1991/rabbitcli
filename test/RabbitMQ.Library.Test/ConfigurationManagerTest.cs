@@ -59,7 +59,7 @@ namespace RabbitMQ.Library.Test
         [Fact]
         public void Should_Store_Configuration()
         {
-            var config = "{{\"TextEditorPath\":\"unit-test\", \"ConfigurationCollection\":{{}}}}";
+            var config = "{\"TextEditorPath\":\"unit-test\", \"ConfigurationCollection\":{}}";
             var manager = new MockConfigurationManager(config);
             manager.Initialize();
 
