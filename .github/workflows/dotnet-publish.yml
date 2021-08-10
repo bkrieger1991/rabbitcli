@@ -3,7 +3,7 @@ name: .NET
 on: workflow_dispatch
     
 jobs:
-  buildAndPublish:
+  publish-win-x64:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -17,13 +17,15 @@ jobs:
       run: dotnet build --no-restore RabbitMQ.Toolbox.sln
     - name: Publish application for win-x64
       run: dotnet publish --no-build --self-contained true -r win-x64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true src/RabbitMQ.CLI/RabbitMQ.CLI.csproj -o ./publish
+    - name: Copy install.ps1 to publish dir
+      run: cp install.ps1 publish/install.ps1
     - name: Save Published Files
       uses: actions/upload-artifact@v2
       with:
         name: publish-win-x64
         path: ./publish/
-  store-artifacts:
-    needs: buildAndPublish
+  pack-releases:
+    needs: publish-win-x64
     runs-on: ubuntu-latest
     steps:
     - uses: actions/download-artifact@v2
@@ -33,3 +35,23 @@ jobs:
     - name: Display structure of downloaded files
       run: ls -Rla
       working-directory: ./
+    - uses: papeloto/action-zip@v1
+      name: Pack published files for win-x64
+      with:
+        files: publish/rabbitcli.exe publish/install.ps1
+        dest: RabbitCLI-"`date +"%Y%m%d%H%M%S"`".zip
+    - uses: actions/checkout@v2
+      name: Checkout releases branch
+      with:
+        ref: releases
+        path: repo
+    - name: Copy archive
+      run: cp RabbitCLI*.zip repo/win-x64/
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v3
+      with:
+        path: repo
+        delete-branch: true
+        branch: release/rabbitcli
+        title: New Release of RabbitCLI
+  
