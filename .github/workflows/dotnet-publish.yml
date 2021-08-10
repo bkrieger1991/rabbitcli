@@ -28,6 +28,13 @@ jobs:
     needs: publish-win-x64
     runs-on: ubuntu-latest
     steps:
+    - name: Get current timestamp
+      id: date
+      run: echo "::set-output name=timestamp::$(date +'%Y%m%d%H%M%S')"
+    - name: Test date output
+      run: echo Set timestamp - $TS
+      env:
+        TS: ${{ steps.date.outputs.timestamp }}
     - uses: actions/download-artifact@v2
       with:
         name: publish-win-x64
@@ -39,7 +46,7 @@ jobs:
       name: Pack published files for win-x64
       with:
         files: win-x64/rabbitcli.exe win-x64/install.ps1
-        dest: RabbitCLI-`date +"%Y%m%d%H%M%S"`.zip
+        dest: RabbitCLI-${{ steps.date.outputs.timestamp }}.zip
     - uses: actions/checkout@v2
       name: Checkout releases branch
       with:
@@ -54,6 +61,8 @@ jobs:
         delete-branch: true
         branch: release/rabbitcli
         title: New Release of RabbitCLI
+        commit-message: Adds new release-package
         body: |
           Adds new release-package
+          [Created automatically]
   
