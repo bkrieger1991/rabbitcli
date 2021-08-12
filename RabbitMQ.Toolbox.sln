@@ -11,7 +11,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{78DA39B0-1F6
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{DF138F67-58AD-435D-8815-0786E3EAB89C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RabbitMQ.Library.Test", "test\RabbitMQ.Library.Test\RabbitMQ.Library.Test.csproj", "{D44DFAB3-E31C-404A-BE0C-5A2F24FCB0A4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RabbitMQ.Library.Test", "test\RabbitMQ.Library.Test\RabbitMQ.Library.Test.csproj", "{D44DFAB3-E31C-404A-BE0C-5A2F24FCB0A4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F9DC8D5B-4668-42F3-BA15-DB0574B6F132}"
+	ProjectSection(SolutionItems) = preProject
+		readme.md = readme.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

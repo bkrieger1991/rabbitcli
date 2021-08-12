@@ -64,8 +64,11 @@ To create a new configuration, just call the `add-config` command and provide al
 |`--username`|*guest*|A username, permitted to access<br>RabbitMQ Management API and perform AMQP Actions|
 |`--password`|*guest*|The password of your user|
 |`--vhost`|"*/*" or *youHost*|The virtualhost you want to connect to.<br>If you want to manage different virtual-hosts,<br>you have to create different configurations.|
-|`--web`|*http://localhost:15672*|The address of your management api<br>(if you have enabled SSL, use `https`)|
-|`--amqp`|*amqp://localhost:5672*|The address for AMQP connections|
+|`--host`|*localhost*|The hostname used for amqp and management api calls|
+|`--amqp-port`|*5672*|The AMQP port (default: 5672)|
+|`--web-port`|*15672*|The management API port (default: 15672)|
+|`--web-host`|*my.rabbit.api*|A different hostname for your management api|
+|`--ssl`||Provide this argument to enable SSL|
 |`--name`|*myConfig*|Name of you configuration.|
 
 The **default** configurtaion will be created if you don't provide a name for a certain configuration.
@@ -77,8 +80,7 @@ rabbitcli add-config \
     --username guest \
     --password guest \
     --vhost "/" \
-    --web http://localhost:15672 \
-    --amqp http://localhost:5672
+    --host localhost
 ```
 **Example of creating a configuration with name `configname`**
 ```
@@ -86,9 +88,21 @@ rabbitcli add-config --name configname \
     --username guest \
     --password guest \
     --vhost "/" \
-    --web http://localhost:15672 \
-    --amqp http://localhost:5672
+    --host localhost
 ```
+**Example of creating a configuration with a different management API hostname**
+```
+rabbitcli add-config \
+    --username guest \
+    --password guest \
+    --vhost "/" \
+    --host my.rabbit.mq \
+    --amqp-port 5672 \
+    --web-host api.rabbit.mq \
+    --web-port 80 \
+    --ssl
+```
+
 ### Configuration Storage
 The configuration is stored in a `json` file in your local user-profile folder (on windows systems: `C:\users\<your-name>\rabbitcli.json`)
 
