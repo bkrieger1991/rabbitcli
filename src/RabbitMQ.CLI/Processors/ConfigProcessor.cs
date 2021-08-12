@@ -26,10 +26,17 @@ namespace RabbitMQ.CLI.Processors
                 options.ConfigName = null;
             }
 
+            // Normalize empty web host
+            if (string.IsNullOrWhiteSpace(options.WebHostname))
+            {
+                options.WebHostname = null;
+            }
+
             var config = RabbitMqConfiguration.Create(
                 options.Username, options.Password,
-                options.VirtualHost, options.AmqpAddress,
-                options.WebInterfaceAddress, options.ConfigName
+                options.VirtualHost, options.Hostname,
+                options.AmqpPort, options.WebHostname ?? options.Hostname,
+                options.WebPort, options.Ssl, options.ConfigName
             );
 
             _configManager.AddConfiguration(config);
@@ -52,21 +59,12 @@ namespace RabbitMQ.CLI.Processors
             config.Password = options.Password ?? config.Password;
             config.Username = options.Username ?? config.Username;
             config.VirtualHost = options.VirtualHost ?? config.VirtualHost;
-
-            if (!string.IsNullOrWhiteSpace(options.AmqpAddress))
-            {
-                var uri = new Uri(options.AmqpAddress);
-                config.AmqpAddress = uri.Host;
-                config.AmqpPort = uri.Port;
-            }
-
-            if (!string.IsNullOrWhiteSpace(options.WebInterfaceAddress))
-            {
-                var uri = new Uri(options.WebInterfaceAddress);
-                config.WebInterfaceAddress = uri.Host;
-                config.WebInterfacePort = uri.Port;
-            }
-
+            config.AmqpAddress = options.AmqpHostname ?? config.AmqpAddress;
+            config.AmqpPort = options.AmqpPort > 0 ? options.AmqpPort : config.AmqpPort;
+            config.WebInterfaceAddress = options.WebHostname ?? config.WebInterfaceAddress;
+            config.WebInterfacePort = options.WebPort > 0 ? options.WebPort : config.WebInterfacePort;
+            config.Ssl = options.Ssl ?? config.Ssl;
+            
             _configManager.UpdateConfiguration(config);
             return Task.FromResult(0);
         }
