@@ -8,7 +8,8 @@
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
+    <ApplicationIcon>rabbitcli.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
