@@ -10,6 +10,13 @@
     <TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
     <Version>1.2.1</Version>
     <ApplicationIcon>rabbitcli.ico</ApplicationIcon>
+    <Authors>Benjamin Krieger</Authors>
+    <Description>A CLI tool to better manage messages in a RabbitMQ instance</Description>
+    <Copyright>Benjamin Krieger</Copyright>
+    <PackageProjectUrl>https://bkrieger1991.github.io/rabbitcli/</PackageProjectUrl>
+    <PackageIcon>rabbitcli.ico</PackageIcon>
+    <RepositoryUrl>https://github.com/bkrieger1991/rabbitcli</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,6 +36,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RabbitMQ.Library\RabbitMQ.Library.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="rabbitcli.ico">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
