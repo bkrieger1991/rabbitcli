@@ -14,16 +14,11 @@ namespace RabbitMQ.Library.Configuration
         public int WebInterfacePort { get; set; }
         public bool Ssl { get; set; }
 
-        public static RabbitMqConfiguration Create(string username, string password, string virtualHost,
-            string amqpAddress, string webInterfaceAddress, string name = "default")
-        {
-            var amqpUri = new Uri(amqpAddress);
-            var webUri = new Uri(webInterfaceAddress);
-            return Create(username, password, virtualHost, amqpUri, webUri, name, webUri.Scheme == "https");
-        }
-
-        public static RabbitMqConfiguration Create(string username, string password, string virtualHost,
-            Uri amqpAddress, Uri webInterfaceAddress, string name = "default", bool ssl = false)
+        public static RabbitMqConfiguration Create(
+            string username, string password, string virtualHost,
+            string amqpHost, int amqpPort, string webHost,
+            int webPort, bool ssl = false, string name = "default"
+        )
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -36,10 +31,10 @@ namespace RabbitMQ.Library.Configuration
                 Password = password,
                 VirtualHost = virtualHost,
                 Name = name,
-                AmqpAddress = amqpAddress.Host,
-                AmqpPort = amqpAddress.Port,
-                WebInterfaceAddress = webInterfaceAddress.Host,
-                WebInterfacePort = webInterfaceAddress.Port,
+                AmqpAddress = amqpHost,
+                AmqpPort = amqpPort,
+                WebInterfaceAddress = webHost,
+                WebInterfacePort = webPort,
                 Ssl = ssl
             };
         }
