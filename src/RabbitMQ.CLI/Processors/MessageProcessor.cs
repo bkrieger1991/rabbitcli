@@ -178,8 +178,13 @@ namespace RabbitMQ.CLI.Processors
             {
                 var messages = await _rmqClient.GetMessages(tempQueue.Name, 0, options.Filter, true, token);
 
+                if (options.DumpDirectory != null)
+                {
+                    await Task.WhenAll(messages.Select(m => DumpMessage(options.DumpDirectory, m)));
+                }
+
                 if(messages.Length > 0) 
-                { 
+                {
                     var table = DrawMessageTable(options, messages, false);
                     if (count > 0 && count % 20 != 0)
                     {
@@ -242,6 +247,12 @@ namespace RabbitMQ.CLI.Processors
         {
             var messages = await _rmqClient.GetMessages(queueName, options.Limit, options.Filter);
 
+
+            if (options.DumpDirectory != null)
+            {
+                await Task.WhenAll(messages.Select(m => DumpMessage(options.DumpDirectory, m)));
+            }
+
             if (options.ContentOnly)
             {
                 var output = JsonConvert.SerializeObject(messages.Select(m => 
@@ -259,7 +270,7 @@ namespace RabbitMQ.CLI.Processors
                 Console.WriteLine(text, ConsoleColors.JsonColor);
                 return;
             }
-
+            
             Console.WriteLine(DrawMessageTable(options, messages, true));
         }
 
@@ -270,6 +281,12 @@ namespace RabbitMQ.CLI.Processors
             {
                 Console.WriteLine("No message found.");
             }
+
+            if(options.DumpDirectory != null) 
+            { 
+                await DumpMessage(options.DumpDirectory, message);
+            }
+
             if (options.ContentOnly)
             {
                 Console.WriteLine(message.Content, ConsoleColors.JsonColor);
@@ -278,6 +295,26 @@ namespace RabbitMQ.CLI.Processors
             {
                 Console.WriteLine(JsonConvert.SerializeObject(message, Formatting.Indented), ConsoleColors.JsonColor);
             }
+        }
+
+        private async Task DumpMessage(string directory, AmqpMessage message)
+        {
+            var content = message.Content;
+            var path = GetUniqueFilePath(directory, message.Identifier);
+            await File.WriteAllTextAsync(path, content);
+        }
+
+        private string GetUniqueFilePath(string targetDirectory, string messageIdentifier)
+        {
+            var baseFilename = $"{DateTime.Now:yyyy-mm-ddTHHmmss}-{messageIdentifier}";
+            var filename = baseFilename;
+            var appendix = 0;
+            while (File.Exists(Path.Combine(targetDirectory, filename)))
+            {
+                filename = $"{baseFilename}-{appendix++}";
+            }
+
+            return Path.Combine(targetDirectory, filename);
         }
 
         private string DrawMessageTable(GetMessagesOptions options, AmqpMessage[] messages, bool showCount = true)

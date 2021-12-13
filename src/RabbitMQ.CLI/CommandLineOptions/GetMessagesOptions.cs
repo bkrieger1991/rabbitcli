@@ -14,6 +14,9 @@ namespace RabbitMQ.CLI.CommandLineOptions
         [Option("live-view", Required = false, HelpText = "ATTENTION: Experimental; attach to a queue using a cloned queue with same exchange bindings. Shows you every incoming message. CTRL+C to cancel viewing and delete the temporary queue.")]
         public bool LiveView { get; set; }
 
+        [Option("dump", Required = false, HelpText = "Provide a directory to dump fetched messages into. Also works with 'live-view'.")]
+        public string DumpDirectory { get; set; }
+
         [Option("body", Required = false, HelpText = "Outputs the message body instead of information about the message itself.")]
         public bool ContentOnly { get; set; }
         
