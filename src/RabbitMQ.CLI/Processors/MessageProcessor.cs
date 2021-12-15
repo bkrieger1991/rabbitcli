@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ConsoleTables;
+using MimeSharp;
 using Newtonsoft.Json;
 using RabbitMQ.CLI.CommandLineOptions;
 using RabbitMQ.Library;
@@ -300,6 +301,11 @@ namespace RabbitMQ.CLI.Processors
         private async Task DumpMessage(GetMessagesOptions options, AmqpMessage message)
         {
             var content = message.Content;
+            if(!Directory.Exists(options.DumpDirectory))
+            {
+                Directory.CreateDirectory(options.DumpDirectory);
+            }
+
             var path = GetUniqueFilePath(options.DumpDirectory, message.Identifier);
             if (options.DumpMetadata)
             {
@@ -314,7 +320,21 @@ namespace RabbitMQ.CLI.Processors
 
                 await File.WriteAllTextAsync(metadataFilePath, JsonConvert.SerializeObject(metadata, Formatting.Indented));
             }
-            await File.WriteAllTextAsync(path, content);
+            await File.WriteAllTextAsync(path + GuessFileEnding(message.ContentType), content);
+        }
+
+        private string GuessFileEnding(string messageContentType)
+        {
+            var mime = new Mime();
+            switch(messageContentType)
+            {
+                case "application/cloudevents": return ".json";
+                default:
+                {
+                    var ext = mime.Extension(messageContentType).FirstOrDefault();
+                    return ext == null ? "" : $".{ext}";
+                }
+            }
         }
 
         private string GetUniqueFilePath(string targetDirectory, string messageIdentifier)
