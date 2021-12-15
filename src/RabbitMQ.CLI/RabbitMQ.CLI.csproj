@@ -8,7 +8,7 @@
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
-    <Version>1.2.1</Version>
+    <Version>1.3.0</Version>
     <ApplicationIcon>rabbitcli.ico</ApplicationIcon>
     <Authors>Benjamin Krieger</Authors>
     <Description>A CLI tool to better manage messages in a RabbitMQ instance</Description>
