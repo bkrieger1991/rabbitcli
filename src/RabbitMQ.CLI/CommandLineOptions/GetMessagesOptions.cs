@@ -17,6 +17,9 @@ namespace RabbitMQ.CLI.CommandLineOptions
         [Option("dump", Required = false, HelpText = "Provide a directory to dump fetched messages into. Also works with 'live-view'.")]
         public string DumpDirectory { get; set; }
 
+        [Option("dump-metadata", Required = false, HelpText = "Provide this argument, if you want to also dump metadata (like headers and properties) of the event.")]
+        public bool DumpMetadata { get; set; }
+
         [Option("body", Required = false, HelpText = "Outputs the message body instead of information about the message itself.")]
         public bool ContentOnly { get; set; }
         

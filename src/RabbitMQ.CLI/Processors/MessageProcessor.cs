@@ -297,10 +297,23 @@ namespace RabbitMQ.CLI.Processors
             }
         }
 
-        private async Task DumpMessage(string directory, AmqpMessage message)
+        private async Task DumpMessage(GetMessagesOptions options, AmqpMessage message)
         {
             var content = message.Content;
-            var path = GetUniqueFilePath(directory, message.Identifier);
+            var path = GetUniqueFilePath(options.DumpDirectory, message.Identifier);
+            if (options.DumpMetadata)
+            {
+                var metadataFilePath = path + "-meta.json";
+                var metadata = new
+                {
+                    message.Properties,
+                    message.ContentType,
+                    message.Fields,
+                    message.Identifier
+                };
+
+                await File.WriteAllTextAsync(metadataFilePath, JsonConvert.SerializeObject(metadata, Formatting.Indented));
+            }
             await File.WriteAllTextAsync(path, content);
         }
 
