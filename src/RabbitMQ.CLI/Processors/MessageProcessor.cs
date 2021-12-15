@@ -180,7 +180,7 @@ namespace RabbitMQ.CLI.Processors
 
                 if (options.DumpDirectory != null)
                 {
-                    await Task.WhenAll(messages.Select(m => DumpMessage(options.DumpDirectory, m)));
+                    await Task.WhenAll(messages.Select(m => DumpMessage(options, m)));
                 }
 
                 if(messages.Length > 0) 
@@ -250,7 +250,7 @@ namespace RabbitMQ.CLI.Processors
 
             if (options.DumpDirectory != null)
             {
-                await Task.WhenAll(messages.Select(m => DumpMessage(options.DumpDirectory, m)));
+                await Task.WhenAll(messages.Select(m => DumpMessage(options, m)));
             }
 
             if (options.ContentOnly)
@@ -284,7 +284,7 @@ namespace RabbitMQ.CLI.Processors
 
             if(options.DumpDirectory != null) 
             { 
-                await DumpMessage(options.DumpDirectory, message);
+                await DumpMessage(options, message);
             }
 
             if (options.ContentOnly)
