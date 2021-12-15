@@ -28,7 +28,6 @@ namespace RabbitMQ.CLI.Processors
             _rmqClient = rmqClient;
             _configManager = configManager;
             _cts = new CancellationTokenSource();
-
         }
 
         public async Task<int> GetMessages(GetMessagesOptions options)

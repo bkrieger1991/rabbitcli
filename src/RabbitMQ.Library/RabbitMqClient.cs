@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -356,6 +358,45 @@ namespace RabbitMQ.Library
             await _apiClient.DeleteQueueAsync(queue);
         }
 
+        public async Task PublishMessage(
+            string exchange, 
+            string routingKey, 
+            string content, 
+            IDictionary<string, object> parameters
+        )
+        {
+            using var connection = _amqpConnectionFactory.CreateConnection();
+            using var model = connection.CreateModel();
+            // Create IBasicProperties and map given values in parameters into it
+            var properties = CreatePublishPropertiesFromParameters(model, parameters);
+            model.BasicPublish(exchange, routingKey, false, properties);
+        }
+
+        private IBasicProperties CreatePublishPropertiesFromParameters(IModel model, IDictionary<string, object> parameters)
+        {
+            var properties = model.CreateBasicProperties();
+            properties.ContentEncoding = Encoding.UTF8.WebName;
+            properties.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                .ToList()
+                .ForEach(p =>
+                    {
+                        var key = $"RMQ-{p.Name}";
+                        if (parameters.ContainsKey(key))
+                        {
+                            p.SetValue(properties, parameters[p.Name]);
+                            parameters.Remove(key);
+                        }
+                    }
+                );
+            properties.DeliveryMode = 1;
+            properties.Headers = parameters;
+            var contentTypeKey = "Content-Type";
+            properties.ContentType = parameters.ContainsKey(contentTypeKey)
+                ? parameters[contentTypeKey].ToString()
+                : "";
+            return properties;
+        }
+
         private Task<int> IterateMessages(
             string queue,
             string filter,
@@ -412,13 +453,13 @@ namespace RabbitMQ.Library
             // Special ways to filter with a google-like syntax...
             // prefixed search with properties: will search all property fields
             // prefixed search with headers: will search all headers
-            if (filter.StartsWith(propertySearchPrefix))
+            if (filter.StartsWith(propertySearchPrefix, true, CultureInfo.InvariantCulture))
             {
                 // Check if any property contains the text behind the prefix
                 filter = filter.Substring(propertySearchPrefix.Length);
                 return MatchesPropertyFilter(msg, filter);
             }
-            if (filter.StartsWith(headerSearchPrefix))
+            if (filter.StartsWith(headerSearchPrefix, true, CultureInfo.InvariantCulture))
             {
                 // Check if any header contains the text behind the prefix
                 filter = filter.Substring(headerSearchPrefix.Length);
@@ -427,13 +468,14 @@ namespace RabbitMQ.Library
 
             // Default case: check the content
             var body = Encoding.UTF8.GetString(msg.Body.ToArray());
-            return body.ToLower().Contains(filter.ToLower());
+            return body.Contains(filter, StringComparison.InvariantCultureIgnoreCase);
         }
 
         private bool MatchesHeaderFilter(BasicGetResult msg, string filter)
         {
             return msg.BasicProperties.Headers.Any(
-                kv => RabbitMqValueHelper.ConvertHeaderValue(kv.Value).Contains(filter)
+                kv => RabbitMqValueHelper.ConvertHeaderValue(kv.Value)
+                    .Contains(filter, StringComparison.InvariantCultureIgnoreCase)
             );
         }
 
@@ -450,7 +492,7 @@ namespace RabbitMQ.Library
                             .GetProperty(prop)?
                             .GetValue(msg.BasicProperties)
                         as string;
-                    return value?.Contains(filter) ?? false;
+                    return value?.Contains(filter, StringComparison.InvariantCultureIgnoreCase) ?? false;
                 }
             );
         }
@@ -558,6 +600,11 @@ namespace RabbitMQ.Library
             // Debugging...
             // Console.WriteLine(message);
             // Console.WriteLine(e);
+        }
+
+        public void PublishMessage()
+        {
+            throw new NotImplementedException();
         }
     }
 }
