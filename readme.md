@@ -236,6 +236,8 @@ This are the options available for the `get-messages` command
 |`--hash`||Provide a message-hash (shown in result list view) to fetch details<br>about a single message|
 |`--body`||Output body content of a single message. <br>Only works in combination with `--hash` option|
 |`--live-view`||**EXPERIMENTAL**: Read more about this in below section<br>[Live-Streaming messages](#live-streaming-messages)|
+|`--dump`|&lt;Directory&gt;|Stores the message data for each message into the given directory.|
+|`--dump-metadata`||Set option to get a second file <br>(*.meta.json)beside your message-content <br>with all meta-data of the message|
 
 ### Filter possibilites
 Here are some filter examples you can use:
