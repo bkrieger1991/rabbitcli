@@ -341,8 +341,9 @@ The `proxy` command provides a kind of HTTP-Proxy to publish messages to your co
 You can use a tool of your choice that is capable of making (and maybe managing) HTTP-Requests (like [Postman](https://www.postman.com/) or [Thunderclient](https://www.thunderclient.io/) for example).
 
 The `proxy` command has following options:
+
 |Option|Default-Value|Description|
-|---|---|---|---|
+|---|---|---|
 |`-c` or `--config`|`default`|The configuration you want to use.<br>Defaults to `default` config|
 |`--port`|`15673`|Provide an alternative port to start the proxy, <br>if the configured default is already used in your system|
 |`--except-headers`|`Content-Length,Host,User-Agent,Accept,Accept-Encoding,Connection,Cache-Control`|Provide a comma-separated list of header-keys you don't want to transfer into the published message-headers|
