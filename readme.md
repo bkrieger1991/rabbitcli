@@ -25,6 +25,11 @@
     - [Command: `purge-messages`](#command-purge-messages)
     - [Command: `edit-message`](#command-edit-message)
   - [HTTP-Proxy: Command `proxy`](#http-proxy-command-proxy)
+    - [Publishing messages](#publishing-messages)
+      - [Body](#body)
+      - [Content-Type](#content-type)
+      - [Other Message Properties](#other-message-properties)
+      - [Message Headers](#message-headers)
 
 # What is RabbitCLI?
 Rabbit CLI should help you to perform tasks with a RabbitMQ instance, you can't do with the Management UI addon.
