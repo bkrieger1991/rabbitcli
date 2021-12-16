@@ -391,6 +391,7 @@ namespace RabbitMQ.Library
 
         private IBasicProperties CreatePublishPropertiesFromParameters(IModel model, IDictionary<string, object> parameters)
         {
+            const string contentTypeKey = "Content-Type";
             var properties = model.CreateBasicProperties();
             properties.ContentEncoding = Encoding.UTF8.WebName;
             properties.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)
@@ -406,11 +407,12 @@ namespace RabbitMQ.Library
                     }
                 );
             properties.DeliveryMode = 1;
-            properties.Headers = parameters;
-            var contentTypeKey = "Content-Type";
             properties.ContentType = parameters.ContainsKey(contentTypeKey)
                 ? parameters[contentTypeKey].ToString()
                 : "";
+            properties.Headers = parameters
+                .Where(p => !p.Key.StartsWith("RMQ-") && !string.Equals(p.Key, contentTypeKey, StringComparison.CurrentCultureIgnoreCase))
+                .ToDictionary(kv => kv.Key, kv => kv.Value);
             return properties;
         }
 

@@ -2,8 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using ConsoleTables;
@@ -84,17 +86,17 @@ namespace RabbitMQ.CLI.Processors
                 ValidateExchangeAndQueue(exchange, queue);
                 var headerBlacklist = GetHeaderBlacklist();
                 headerBlacklist.AddRange(new [] { RoutingKeyHeaderKey, ExchangeHeaderKey, QueueHeaderKey});
-                var parameters = GetParameters(headers, headerBlacklist);
+                var parameters = GetParameters(headers, headerBlacklist.ToArray());
 
                 var content = await GetRequestContent(context.Request);
                 
                 if(string.IsNullOrWhiteSpace(queue)) 
                 { 
-                    await _rmqClient.PublishMessageToExchange(exchange, routingKey, content, parameters);
+                    _rmqClient.PublishMessageToExchange(exchange, routingKey, Encoding.UTF8.GetBytes(content), parameters);
                 }
                 else
                 {
-                    await _rmqClient.PublishMessageToQueue(queue, routingKey, content, parameters);
+                    _rmqClient.PublishMessageToQueue(queue, routingKey, Encoding.UTF8.GetBytes(content), parameters);
                 }
             }
             catch (Exception e)
@@ -120,12 +122,6 @@ namespace RabbitMQ.CLI.Processors
             return _options.ExceptHeaders
                 .Split(",")
                 .Select(h => h.Trim())
-                .Union(new[]
-                {
-                    "X-Exchange",
-                    "X-RoutingKey",
-                    "X-Queue"
-                })
                 .ToList();
         }
 
@@ -178,7 +174,7 @@ namespace RabbitMQ.CLI.Processors
         private void OutputUsageInfo(int port)
         {
             Console.WriteLine();
-            Console.WriteLine("See also full documentation at: https://github.com/bkrieger1991/rabbitcli/tree/master#command-proxy", Color.ForestGreen);
+            Console.WriteLine("See also full documentation at: https://github.com/bkrieger1991/rabbitcli/tree/master#http-proxy-command-proxy", Color.ForestGreen);
             Console.WriteLine();
             var propTable = new ConsoleTable("Field", "Info")
             {
@@ -255,12 +251,10 @@ namespace RabbitMQ.CLI.Processors
                 .All(c => c.Port != port);
         }
 
-        private async Task<byte[]> GetRequestContent(HttpRequest request)
+        private async Task<string> GetRequestContent(HttpRequest request)
         {
-            var contentBytes = new byte[] { };
-            await request.Body.ReadAsync(contentBytes, _token);
-            
-            return contentBytes;
+            using var sr = new StreamReader(request.Body);
+            return await sr.ReadToEndAsync();
         }
     }
 
