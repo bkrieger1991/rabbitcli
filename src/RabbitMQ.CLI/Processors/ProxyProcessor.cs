@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading;
@@ -23,11 +23,16 @@ namespace RabbitMQ.CLI.Processors
 {
     public class ProxyProcessor
     {
+        private const string ExchangeHeaderKey = "X-Exchange";
+        private const string RoutingKeyHeaderKey = "X-RoutingKey";
+        private const string QueueHeaderKey = "X-Queue";
+
         private readonly RabbitMqClient _rmqClient;
         private readonly ConfigurationManager _configManager;
         private readonly CancellationTokenSource _cts;
         private readonly CancellationToken _token;
         private RabbitMqConfiguration _config;
+        private ProxyOptions _options;
 
         public ProxyProcessor(RabbitMqClient rmqClient, ConfigurationManager configManager)
         {
@@ -39,6 +44,7 @@ namespace RabbitMQ.CLI.Processors
 
         public async Task<int> CreateProxy(ProxyOptions options)
         {
+            _options = options;
             _config = _configManager.Get(options.ConfigName);
             Console.WriteLine("=== RabbitMQ HTTP Proxy by RabbitCLI ===");
             Console.WriteLine("Starting proxy WebServer -- Press CTRL+C to quit", Color.DarkGray);
@@ -67,10 +73,82 @@ namespace RabbitMQ.CLI.Processors
 
         public async Task HandleWebRequest(HttpContext context)
         {
-            var headers = context.Request.Headers;
-            var content = GetRequestContent(context.Request);
             _rmqClient.SetConfig(_config);
-            _rmqClient.PublishMessage();
+
+            try
+            {
+                var headers = context.Request.Headers;
+                var routingKey = GetHeaderOrNull(RoutingKeyHeaderKey, headers);
+                var exchange = GetHeaderOrNull(ExchangeHeaderKey, headers);
+                var queue = GetHeaderOrNull(QueueHeaderKey, headers);
+                ValidateExchangeAndQueue(exchange, queue);
+                var headerBlacklist = GetHeaderBlacklist();
+                headerBlacklist.AddRange(new [] { RoutingKeyHeaderKey, ExchangeHeaderKey, QueueHeaderKey});
+                var parameters = GetParameters(headers, headerBlacklist);
+
+                var content = await GetRequestContent(context.Request);
+                
+                if(string.IsNullOrWhiteSpace(queue)) 
+                { 
+                    await _rmqClient.PublishMessageToExchange(exchange, routingKey, content, parameters);
+                }
+                else
+                {
+                    await _rmqClient.PublishMessageToQueue(queue, routingKey, content, parameters);
+                }
+            }
+            catch (Exception e)
+            {
+                context.Response.StatusCode = 500;
+                await context.Response.WriteAsJsonAsync(new { Error = e.Message }, _token);
+            }
+        }
+
+        private IDictionary<string, object> GetParameters(
+            IHeaderDictionary headers,
+            string[] blacklist
+        )
+        {
+            return headers
+                .ToArray()
+                .Where(kv => !blacklist.Contains(kv.Key, StringComparer.InvariantCultureIgnoreCase))
+                .ToDictionary(kv => kv.Key, kv => (object)kv.Value.ToString());
+        }
+
+        private List<string> GetHeaderBlacklist()
+        {
+            return _options.ExceptHeaders
+                .Split(",")
+                .Select(h => h.Trim())
+                .Union(new[]
+                {
+                    "X-Exchange",
+                    "X-RoutingKey",
+                    "X-Queue"
+                })
+                .ToList();
+        }
+
+        private void ValidateExchangeAndQueue(string exchange, string queue)
+        {
+            if (!string.IsNullOrWhiteSpace(exchange) && !string.IsNullOrWhiteSpace(queue))
+            {
+                throw new Exception(
+                    "Ambiguous definition of queue and exchange. Provide only one of both."
+                );
+            }
+
+            if (string.IsNullOrWhiteSpace(exchange) && string.IsNullOrWhiteSpace(queue))
+            {
+                throw new Exception("Neither queue nor exchange defined. One of both is required.");
+            }
+        }
+
+        private string GetHeaderOrNull(string key, IHeaderDictionary headers)
+        {
+            return headers.ContainsKey(key)
+                ? headers[key].ToString()
+                : null;
         }
 
         private IHostBuilder CreateHostBuilder(int port)
@@ -86,7 +164,7 @@ namespace RabbitMQ.CLI.Processors
                 )
                 .ConfigureWebHostDefaults(
                     c => c.UseStartup<WebHostStartup>()
-                        .UseUrls($"http://localhost:{port}")
+                        .UseUrls($"http://*:{port}")
                 );
         }
 
@@ -146,26 +224,28 @@ namespace RabbitMQ.CLI.Processors
         {
             Console.WriteLine();
             Console.WriteLine("<Press any key to start immediately>");
+            var cts = new CancellationTokenSource();
             var delay = TimeSpan.FromSeconds(5);
             var startDate = DateTime.Now;
             var informTask = Task.Run(
                 async () =>
                 {
-                    while (startDate + delay > DateTime.Now)
+                    while (startDate + delay > DateTime.Now && !cts.Token.IsCancellationRequested)
                     {
                         Console.Write($"Starting WebHost in: {((startDate + delay) - DateTime.Now).Seconds} seconds...\r");
                         await Task.Delay(200);
                     }
-                }
+                }, cts.Token
             );
             var triggerTask = Task.Run(
                 () =>
                 {
                     Console.ReadKey();
-                }
+                }, cts.Token
             );
 
             await Task.WhenAny(informTask, triggerTask);
+            cts.Cancel();
         }
 
         private bool CheckIfPortIsAvailable(int port)
@@ -175,15 +255,12 @@ namespace RabbitMQ.CLI.Processors
                 .All(c => c.Port != port);
         }
 
-        private string GetRequestContent(HttpRequest request)
+        private async Task<byte[]> GetRequestContent(HttpRequest request)
         {
-            using var mem = new MemoryStream();
-            using var reader = new StreamReader(mem);
-            request.Body.CopyTo(mem);
-            var content = reader.ReadToEnd();
-            mem.Seek(0, SeekOrigin.Begin);
-
-            return content;
+            var contentBytes = new byte[] { };
+            await request.Body.ReadAsync(contentBytes, _token);
+            
+            return contentBytes;
         }
     }
 

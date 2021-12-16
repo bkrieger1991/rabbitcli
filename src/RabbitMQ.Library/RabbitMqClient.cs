@@ -358,10 +358,10 @@ namespace RabbitMQ.Library
             await _apiClient.DeleteQueueAsync(queue);
         }
 
-        public async Task PublishMessage(
-            string exchange, 
-            string routingKey, 
-            string content, 
+        public void PublishMessageToExchange(
+            string exchange,
+            string routingKey,
+            byte[] content,
             IDictionary<string, object> parameters
         )
         {
@@ -369,7 +369,24 @@ namespace RabbitMQ.Library
             using var model = connection.CreateModel();
             // Create IBasicProperties and map given values in parameters into it
             var properties = CreatePublishPropertiesFromParameters(model, parameters);
-            model.BasicPublish(exchange, routingKey, false, properties);
+            model.BasicPublish(exchange, routingKey, false, properties, content);
+            model.WaitForConfirms();
+        }
+
+        public void PublishMessageToQueue(
+            string queue,
+            string routingKey,
+            byte[] content,
+            IDictionary<string, object> parameters
+        )
+        {
+            using var connection = _amqpConnectionFactory.CreateConnection();
+            using var model = connection.CreateModel();
+            using var tempExchange = TemporaryExchange.Create(model).BindTo(queue);
+
+            // Create IBasicProperties and map given values in parameters into it
+            var properties = CreatePublishPropertiesFromParameters(model, parameters);
+            tempExchange.Publish(properties, content, routingKey);
         }
 
         private IBasicProperties CreatePublishPropertiesFromParameters(IModel model, IDictionary<string, object> parameters)
@@ -600,11 +617,6 @@ namespace RabbitMQ.Library
             // Debugging...
             // Console.WriteLine(message);
             // Console.WriteLine(e);
-        }
-
-        public void PublishMessage()
-        {
-            throw new NotImplementedException();
         }
     }
 }

@@ -32,6 +32,7 @@ namespace RabbitMQ.Library
         public void Publish(IBasicProperties properties, byte[] body, string routingKey = null)
         {
             _model.BasicPublish(Name, routingKey ?? "", false, properties, body);
+            _model.WaitForConfirms();
         }
 
         public void Delete()
