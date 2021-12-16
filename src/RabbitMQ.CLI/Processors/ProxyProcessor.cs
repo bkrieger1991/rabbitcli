@@ -106,6 +106,9 @@ namespace RabbitMQ.CLI.Processors
                 {
                     _rmqClient.PublishMessageToQueue(queue, routingKey, Encoding.UTF8.GetBytes(content), parameters);
                 }
+
+                context.Response.StatusCode = 202;
+                await context.Response.WriteAsJsonAsync(new {Message = "Sucessful published message"});
             }
             catch (Exception e)
             {
@@ -114,7 +117,7 @@ namespace RabbitMQ.CLI.Processors
             }
         }
 
-        private IDictionary<string, object> GetParameters(
+        private IDictionary<string, string> GetParameters(
             IHeaderDictionary headers,
             string[] blacklist
         )
@@ -122,7 +125,7 @@ namespace RabbitMQ.CLI.Processors
             return headers
                 .ToArray()
                 .Where(kv => !blacklist.Contains(kv.Key, StringComparer.InvariantCultureIgnoreCase))
-                .ToDictionary(kv => kv.Key, kv => (object)kv.Value.ToString());
+                .ToDictionary(kv => kv.Key, kv => kv.Value.ToString());
         }
 
         private List<string> GetHeaderBlacklist()

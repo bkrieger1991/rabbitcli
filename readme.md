@@ -350,3 +350,25 @@ The `proxy` command has following options:
 |`--headless`||Providing this option will turn of all extra-messages in the console and will run a plain web-host|
 
 The `proxy` command starts a web-host on the machine, where it gets executed. Press `CTRL+C` to quit the running web-host.
+
+### Publishing messages
+When the HTTP Proxy is started, you can start making HTTP Requests with a tool of your choice.
+
+#### Body
+The body of the HTTP Request is the content of your message. The provided content will be taken without any modification (except reading it as a string with UTF8 encoding).
+
+#### Content-Type
+When you provide a `Content-Type` header, it will be set into the RabbitMQ Message Property `content_type`.
+
+#### Other Message Properties
+To fill any other property of the published message, just add a header with the prefix `RMQ-`.
+
+For example:
+
+|Header|Value|Result|
+|---|---|---|
+|`RMQ-Persistent`|`true`|Will set the `Persistent` property of published message to `true`|
+|`RMQ-CorrelationId`|`my-correlation-id`|Will set the `CorrelationId` property of published message to `my-correlation-id`|
+
+#### Message Headers
+Any HTTP Header that is contained in your request and not gets filtered by `--except-headers` filter, and is not prefixed with `RMQ-` will be published as message-header.

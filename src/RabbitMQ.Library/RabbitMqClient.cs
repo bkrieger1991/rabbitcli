@@ -362,7 +362,7 @@ namespace RabbitMQ.Library
             string exchange,
             string routingKey,
             byte[] content,
-            IDictionary<string, object> parameters
+            IDictionary<string, string> parameters
         )
         {
             using var connection = _amqpConnectionFactory.CreateConnection();
@@ -370,14 +370,13 @@ namespace RabbitMQ.Library
             // Create IBasicProperties and map given values in parameters into it
             var properties = CreatePublishPropertiesFromParameters(model, parameters);
             model.BasicPublish(exchange, routingKey, false, properties, content);
-            model.WaitForConfirms();
         }
 
         public void PublishMessageToQueue(
             string queue,
             string routingKey,
             byte[] content,
-            IDictionary<string, object> parameters
+            IDictionary<string, string> parameters
         )
         {
             using var connection = _amqpConnectionFactory.CreateConnection();
@@ -389,7 +388,7 @@ namespace RabbitMQ.Library
             tempExchange.Publish(properties, content, routingKey);
         }
 
-        private IBasicProperties CreatePublishPropertiesFromParameters(IModel model, IDictionary<string, object> parameters)
+        private IBasicProperties CreatePublishPropertiesFromParameters(IModel model, IDictionary<string, string> parameters)
         {
             const string contentTypeKey = "Content-Type";
             var properties = model.CreateBasicProperties();
@@ -401,19 +400,34 @@ namespace RabbitMQ.Library
                         var key = $"RMQ-{p.Name}";
                         if (parameters.ContainsKey(key))
                         {
-                            p.SetValue(properties, parameters[p.Name]);
+                            p.SetValue(properties, ConvertValue(parameters[key], p.PropertyType));
                             parameters.Remove(key);
                         }
                     }
                 );
-            properties.DeliveryMode = 1;
             properties.ContentType = parameters.ContainsKey(contentTypeKey)
-                ? parameters[contentTypeKey].ToString()
+                ? parameters[contentTypeKey]
                 : "";
             properties.Headers = parameters
                 .Where(p => !p.Key.StartsWith("RMQ-") && !string.Equals(p.Key, contentTypeKey, StringComparison.CurrentCultureIgnoreCase))
-                .ToDictionary(kv => kv.Key, kv => kv.Value);
+                .ToDictionary(kv => kv.Key, kv => (object)kv.Value);
             return properties;
+        }
+
+        private object ConvertValue(string value, Type type)
+        {
+            switch (type.Name.ToLower())
+            {
+                case "string":
+                    return value;
+                case "bool":
+                case "boolean":
+                    return new[] {"true", "1"}.Contains(value);
+                case "byte":
+                    return byte.Parse(value);
+                default:
+                    throw new Exception($"This property type can't be parsed. Type: {type.Name}, Value: {value}");
+            }
         }
 
         private Task<int> IterateMessages(
