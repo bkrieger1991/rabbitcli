@@ -48,8 +48,12 @@ namespace RabbitMQ.CLI.Processors
         {
             _options = options;
             _config = _configManager.Get(options.ConfigName);
-            Console.WriteLine("=== RabbitMQ HTTP Proxy by RabbitCLI ===");
-            Console.WriteLine("Starting proxy WebServer -- Press CTRL+C to quit", Color.DarkGray);
+            if(!options.Headless) 
+            { 
+                Console.WriteLine("=== RabbitMQ HTTP Proxy by RabbitCLI ===");
+                Console.WriteLine("Starting proxy WebServer -- Press CTRL+C to quit", Color.DarkGray);
+            }
+
             if (!CheckIfPortIsAvailable(options.Port))
             {
                 Console.WriteLine($"Error: the port {options.Port} seems to be used by another program. Try choose another port with '--port' option.", Color.DarkRed);
@@ -58,9 +62,13 @@ namespace RabbitMQ.CLI.Processors
 
             try
             {
-                Console.CancelKeyPress += CancellationHandler;
-                OutputUsageInfo(options.Port);
-                await StartWaitMessage();
+                if (!options.Headless)
+                {
+                    Console.CancelKeyPress += CancellationHandler;
+                    OutputUsageInfo(options.Port);
+                    await StartWaitMessage();
+                }
+
                 await CreateHostBuilder(options.Port).Build().RunAsync(_token);
             }
             catch (Exception ex)
