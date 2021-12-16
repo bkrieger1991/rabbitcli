@@ -346,5 +346,6 @@ The `proxy` command has following options:
 |`-c` or `--config`|`default`|The configuration you want to use.<br>Defaults to `default` config|
 |`--port`|`15673`|Provide an alternative port to start the proxy, <br>if the configured default is already used in your system|
 |`--except-headers`|`Content-Length,Host,User-Agent,Accept,Accept-Encoding,Connection,Cache-Control`|Provide a comma-separated list of header-keys you don't want to transfer into the published message-headers|
+|`--headless`||Providing this option will turn of all extra-messages in the console and will run a plain web-host|
 
 The `proxy` command starts a web-host on the machine, where it gets executed. Press `CTRL+C` to quit the running web-host.
