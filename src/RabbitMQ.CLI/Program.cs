@@ -15,6 +15,7 @@ namespace RabbitMQ.CLI
                 .AddSingleton<ConfigProcessor>()
                 .AddSingleton<MessageProcessor>()
                 .AddSingleton<QueueProcessor>()
+                .AddSingleton<ProxyProcessor>()
                 .BuildServiceProvider();
 
             await provider.GetRequiredService<CommandLineProcessor>().Execute(args);

@@ -13,12 +13,19 @@ namespace RabbitMQ.CLI
         private readonly QueueProcessor _queueProcessor;
         private readonly ConfigProcessor _configProcessor;
         private readonly MessageProcessor _messageProcessor;
+        private readonly ProxyProcessor _proxyProcessor;
 
-        public CommandLineProcessor(QueueProcessor queueProcessor, ConfigProcessor configProcessor, MessageProcessor messageProcessor)
+        public CommandLineProcessor(
+            QueueProcessor queueProcessor, 
+            ConfigProcessor configProcessor, 
+            MessageProcessor messageProcessor,
+            ProxyProcessor proxyProcessor
+        )
         {
             _queueProcessor = queueProcessor;
             _configProcessor = configProcessor;
             _messageProcessor = messageProcessor;
+            _proxyProcessor = proxyProcessor;
         }
 
         public async Task Execute(string[] args)
@@ -36,7 +43,8 @@ namespace RabbitMQ.CLI
                         GetMessagesOptions,
                         PurgeMessagesOptions,
                         MoveMessagesOptions,
-                        EditMessageOptions
+                        EditMessageOptions,
+                        ProxyOptions
                 >(args).MapResult(
                         (AddConfigOptions o) => _configProcessor.AddConfig(o),
                         (UpdateConfigOptions o) => _configProcessor.UpdateConfig(o),
@@ -47,6 +55,7 @@ namespace RabbitMQ.CLI
                         (PurgeMessagesOptions o) => _messageProcessor.PurgeMessages(o),
                         (MoveMessagesOptions o) => _messageProcessor.MoveMessages(o),
                         (EditMessageOptions o) => _messageProcessor.EditMessage(o),
+                        (ProxyOptions o) => _proxyProcessor.CreateProxy(o),
                         err => Task.FromResult(-1)
                     );
             }

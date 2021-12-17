@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -356,6 +358,78 @@ namespace RabbitMQ.Library
             await _apiClient.DeleteQueueAsync(queue);
         }
 
+        public void PublishMessageToExchange(
+            string exchange,
+            string routingKey,
+            byte[] content,
+            IDictionary<string, string> parameters
+        )
+        {
+            using var connection = _amqpConnectionFactory.CreateConnection();
+            using var model = connection.CreateModel();
+            // Create IBasicProperties and map given values in parameters into it
+            var properties = CreatePublishPropertiesFromParameters(model, parameters);
+            model.BasicPublish(exchange, routingKey, false, properties, content);
+        }
+
+        public void PublishMessageToQueue(
+            string queue,
+            string routingKey,
+            byte[] content,
+            IDictionary<string, string> parameters
+        )
+        {
+            using var connection = _amqpConnectionFactory.CreateConnection();
+            using var model = connection.CreateModel();
+            using var tempExchange = TemporaryExchange.Create(model).BindTo(queue);
+
+            // Create IBasicProperties and map given values in parameters into it
+            var properties = CreatePublishPropertiesFromParameters(model, parameters);
+            tempExchange.Publish(properties, content, routingKey);
+        }
+
+        private IBasicProperties CreatePublishPropertiesFromParameters(IModel model, IDictionary<string, string> parameters)
+        {
+            const string contentTypeKey = "Content-Type";
+            var properties = model.CreateBasicProperties();
+            properties.ContentEncoding = Encoding.UTF8.WebName;
+            properties.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                .ToList()
+                .ForEach(p =>
+                    {
+                        var key = $"RMQ-{p.Name}";
+                        if (parameters.ContainsKey(key))
+                        {
+                            p.SetValue(properties, ConvertValue(parameters[key], p.PropertyType));
+                            parameters.Remove(key);
+                        }
+                    }
+                );
+            properties.ContentType = parameters.ContainsKey(contentTypeKey)
+                ? parameters[contentTypeKey]
+                : "";
+            properties.Headers = parameters
+                .Where(p => !p.Key.StartsWith("RMQ-") && !string.Equals(p.Key, contentTypeKey, StringComparison.CurrentCultureIgnoreCase))
+                .ToDictionary(kv => kv.Key, kv => (object)kv.Value);
+            return properties;
+        }
+
+        private object ConvertValue(string value, Type type)
+        {
+            switch (type.Name.ToLower())
+            {
+                case "string":
+                    return value;
+                case "bool":
+                case "boolean":
+                    return new[] {"true", "1"}.Contains(value);
+                case "byte":
+                    return byte.Parse(value);
+                default:
+                    throw new Exception($"This property type can't be parsed. Type: {type.Name}, Value: {value}");
+            }
+        }
+
         private Task<int> IterateMessages(
             string queue,
             string filter,
@@ -412,13 +486,13 @@ namespace RabbitMQ.Library
             // Special ways to filter with a google-like syntax...
             // prefixed search with properties: will search all property fields
             // prefixed search with headers: will search all headers
-            if (filter.StartsWith(propertySearchPrefix))
+            if (filter.StartsWith(propertySearchPrefix, true, CultureInfo.InvariantCulture))
             {
                 // Check if any property contains the text behind the prefix
                 filter = filter.Substring(propertySearchPrefix.Length);
                 return MatchesPropertyFilter(msg, filter);
             }
-            if (filter.StartsWith(headerSearchPrefix))
+            if (filter.StartsWith(headerSearchPrefix, true, CultureInfo.InvariantCulture))
             {
                 // Check if any header contains the text behind the prefix
                 filter = filter.Substring(headerSearchPrefix.Length);
@@ -427,13 +501,14 @@ namespace RabbitMQ.Library
 
             // Default case: check the content
             var body = Encoding.UTF8.GetString(msg.Body.ToArray());
-            return body.ToLower().Contains(filter.ToLower());
+            return body.Contains(filter, StringComparison.InvariantCultureIgnoreCase);
         }
 
         private bool MatchesHeaderFilter(BasicGetResult msg, string filter)
         {
             return msg.BasicProperties.Headers.Any(
-                kv => RabbitMqValueHelper.ConvertHeaderValue(kv.Value).Contains(filter)
+                kv => RabbitMqValueHelper.ConvertHeaderValue(kv.Value)
+                    .Contains(filter, StringComparison.InvariantCultureIgnoreCase)
             );
         }
 
@@ -450,7 +525,7 @@ namespace RabbitMQ.Library
                             .GetProperty(prop)?
                             .GetValue(msg.BasicProperties)
                         as string;
-                    return value?.Contains(filter) ?? false;
+                    return value?.Contains(filter, StringComparison.InvariantCultureIgnoreCase) ?? false;
                 }
             );
         }

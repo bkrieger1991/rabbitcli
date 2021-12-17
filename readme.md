@@ -24,6 +24,12 @@
     - [Command: `move-messages`](#command-move-messages)
     - [Command: `purge-messages`](#command-purge-messages)
     - [Command: `edit-message`](#command-edit-message)
+  - [HTTP-Proxy: Command `proxy`](#http-proxy-command-proxy)
+    - [Publishing messages](#publishing-messages)
+      - [Body](#body)
+      - [Content-Type](#content-type)
+      - [Other Message Properties](#other-message-properties)
+      - [Message Headers](#message-headers)
 
 # What is RabbitCLI?
 Rabbit CLI should help you to perform tasks with a RabbitMQ instance, you can't do with the Management UI addon.
@@ -333,3 +339,41 @@ If you wish to use another editor, feel free to update the value to use for e.g.
 ```
 rabbitcli --set texteditorpath --value "code"
 ```
+
+## HTTP-Proxy: Command `proxy`
+The `proxy` command provides a kind of HTTP-Proxy to publish messages to your configured RabbitMQ instance using HTTP-Requests.
+
+You can use a tool of your choice that is capable of making (and maybe managing) HTTP-Requests (like [Postman](https://www.postman.com/) or [Thunderclient](https://www.thunderclient.io/) for example).
+
+The `proxy` command has following options:
+
+|Option|Default-Value|Description|
+|---|---|---|
+|`-c` or `--config`|`default`|The configuration you want to use.<br>Defaults to `default` config|
+|`--port`|`15673`|Provide an alternative port to start the proxy, <br>if the configured default is already used in your system|
+|`--except-headers`|`Content-Length,Host,User-Agent,Accept,Accept-Encoding,Connection,Cache-Control`|Provide a comma-separated list of header-keys you don't want to transfer into the published message-headers|
+|`--headless`||Providing this option will turn of all extra-messages in the console and will run a plain web-host|
+
+The `proxy` command starts a web-host on the machine, where it gets executed. Press `CTRL+C` to quit the running web-host.
+
+### Publishing messages
+When the HTTP Proxy is started, you can start making HTTP Requests with a tool of your choice.
+
+#### Body
+The body of the HTTP Request is the content of your message. The provided content will be taken without any modification (except reading it as a string with UTF8 encoding).
+
+#### Content-Type
+When you provide a `Content-Type` header, it will be set into the RabbitMQ Message Property `content_type`.
+
+#### Other Message Properties
+To fill any other property of the published message, just add a header with the prefix `RMQ-`.
+
+For example:
+
+|Header|Value|Result|
+|---|---|---|
+|`RMQ-Persistent`|`true`|Will set the `Persistent` property of published message to `true`|
+|`RMQ-CorrelationId`|`my-correlation-id`|Will set the `CorrelationId` property of published message to `my-correlation-id`|
+
+#### Message Headers
+Any HTTP Header that is contained in your request and not gets filtered by `--except-headers` filter, and is not prefixed with `RMQ-` will be published as message-header.

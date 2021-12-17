@@ -79,7 +79,9 @@ namespace RabbitMQ.CLI.Processors
 
             if (!string.IsNullOrWhiteSpace(options.Filter))
             {
-                queues = queues.Where(q => q.Name.Contains(options.Filter)).ToArray();
+                queues = queues
+                    .Where(q => q.Name.Contains(options.Filter, StringComparison.InvariantCultureIgnoreCase))
+                    .ToArray();
             }
 
             if (!string.IsNullOrWhiteSpace(options.Sort))
