@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using RabbitMQ.Client.Exceptions;
 using RabbitMQ.Library;
 
 namespace RabbitMQ.CLI.Proxy.Controllers
@@ -79,42 +80,70 @@ namespace RabbitMQ.CLI.Proxy.Controllers
 
                 ValidateExchangeAndQueue(exchange, queue);
                 var headerBlacklist = GetHeaderBlacklist();
-                headerBlacklist.AddRange(new[] { RoutingKeyHeaderKey, ExchangeHeaderKey, QueueHeaderKey });
+                headerBlacklist.AddRange(
+                    new[] {RoutingKeyHeaderKey, ExchangeHeaderKey, QueueHeaderKey}
+                );
                 var parameters = GetParameters(HttpContext.Request.Headers, headerBlacklist);
 
                 if (parameters.Count > 0)
                 {
-                    _logger.LogDebug($"Found {parameters.Count} headers for usage in parameters and message headers");
+                    _logger.LogDebug(
+                        $"Found {parameters.Count} headers for usage in parameters and message headers"
+                    );
                     parameters.ToList().ForEach(p => _logger.LogTrace($"{p.Key}={p.Value}"));
                 }
                 else
                 {
-                    _logger.LogDebug("No further headers provided for use as parameters or message-headers");
+                    _logger.LogDebug(
+                        "No further headers provided for use as parameters or message-headers"
+                    );
                 }
 
                 if (string.IsNullOrWhiteSpace(queue))
                 {
-                    _logger.LogInformation($"Publishing given payload to exchange {exchange} with routing-key '{routingKey}'");
+                    _logger.LogInformation(
+                        $"Publishing given payload to exchange {exchange} with routing-key '{routingKey}'"
+                    );
                     _client.PublishMessageToExchange(exchange, routingKey, payload, parameters);
                 }
                 else
                 {
-                    _logger.LogInformation($"Publishing given payload to queue '{queue}' with routing-key '{routingKey}'");
+                    _logger.LogInformation(
+                        $"Publishing given payload to queue '{queue}' with routing-key '{routingKey}'"
+                    );
                     _client.PublishMessageToQueue(queue, routingKey, payload, parameters);
                 }
 
                 return Accepted(new {Message = "Sucessful published message"});
             }
+            catch (Exception e) when (e.InnerException is BrokerUnreachableException)
+            {
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, GetErrorResponse(e, "Broker unreachable"));
+            }
+            catch (Exception e) when (e.InnerException is AuthenticationFailureException)
+            {
+                return Unauthorized(GetErrorResponse(e, "Authentication failure"));
+            }
             catch (Exception e)
             {
-                return StatusCode(
-                    500,
-                    new
-                    {
-                        Error = e.Message
-                    }
-                );
+                var prefix = "Unhandled error";
+                if (e.InnerException != null)
+                {
+                    prefix += $" of type '{e.InnerException?.GetType().Name}'";
+                }
+                return StatusCode(StatusCodes.Status500InternalServerError, GetErrorResponse(e, prefix));
             }
+        }
+
+        private object GetErrorResponse(Exception e, string messagePrefix)
+        {
+            return new
+            {
+                Type = e.GetType().Name,
+                Message = $"{messagePrefix}: {e.Message}",
+                InnerType = e.InnerException?.GetType().Name,
+                InnerMessage = e.InnerException?.Message
+            };
         }
 
         private List<string> GetHeaderBlacklist()
@@ -155,7 +184,7 @@ namespace RabbitMQ.CLI.Proxy.Controllers
 
         private (string username, string password) GetAuthorization(string headerValue)
         {
-            var decoded = headerValue.FromBase64();
+            var decoded = headerValue.Replace("Basic ", "").FromBase64();
             var splitted = decoded.Split(":");
             return (splitted[0], splitted[1]);
         }

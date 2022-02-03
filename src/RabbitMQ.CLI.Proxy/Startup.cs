@@ -25,7 +25,6 @@ namespace RabbitMQ.CLI.Proxy
             services.AddSingleton(config);
             services.AddTransient<RabbitMqClient>();
             services.AddAutoMapper(c => c.AddMaps(typeof(RabbitMqClient).Assembly));
-            services.AddControllers();
             services.AddLogging(c => c
                 .ClearProviders()
                 .AddConsole()
@@ -35,26 +34,19 @@ namespace RabbitMQ.CLI.Proxy
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "RabbitMQ.CLI.Proxy", Version = "v1" });
             });
+            services.AddControllers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             var logger = app.ApplicationServices.GetRequiredService<ILogger<Startup>>();
-            if (env.IsDevelopment())
-            {
-                logger.LogInformation("Swagger endpoint and ui enabled.");
-                app.UseDeveloperExceptionPage()
-                    .UseSwagger()
-                    .UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "RabbitMQ.CLI.Proxy v1"));
-            } 
-            else
-            {
-                logger.LogInformation("Swagger disabled. Set --environment param to 'Development' to enable swagger");
-            }
-
-            app.UseHttpsRedirection()
-                .UseRouting()
+            logger.LogInformation("Swagger endpoint and ui enabled.");
+            app.UseDeveloperExceptionPage()
+                .UseSwagger()
+                .UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "RabbitMQ.CLI.Proxy v1"));
+            
+            app.UseRouting()
                 .UseEndpoints(endpoints =>
                 {
                     endpoints.MapControllers();

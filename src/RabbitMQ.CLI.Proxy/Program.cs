@@ -7,7 +7,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace RabbitMQ.CLI.Proxy
 {
-    public class Program
+    public static class Program
     {
         public static void Main(string[] args)
         {
@@ -45,7 +45,7 @@ namespace RabbitMQ.CLI.Proxy
                     {
                         webBuilder
                             .UseStartup<Startup>()
-                            .UseUrls($"https://*:{port}");
+                            .UseUrls($"http://*:{port}");
                     });
         }
     }

@@ -121,7 +121,7 @@ The filename-part `docker` or `appsettings.<something>.json`, where `<something>
 This configuration pattern is a built-in feature of Microsoft's `ASP.NET Core`.
 
 # Using the proxy
-Once your container is up and running, you can start publishing messages using `HTTP POST` Requests to the host, where your container is available, using the mapped port (default: `15673`).
+Once your container is up and running, you can start publishing messages using `HTTP POST` requests to the host, where your container is available, using the mapped port (default: `15673`).
 
 `POST https://<your-host>:<port>/`
 
@@ -130,7 +130,7 @@ The body of your http-request will exactly be the message-content, read and publ
 
 ## Parameters
 There are three types of parameters: 
-- fixed parameters to define queue, exchange and routing-key
+- fixed parameters to define for e.g. queue, exchange and routing-key
 - parameters, prefixed with `RMQ_` to get the values mapped into message-properties
 - parameters that are taken as message-headers
 
@@ -149,6 +149,7 @@ To define a certain routing-key, provide the `X-RoutingKey` request header.
 
 ### RabbitMQ Properties
 Provide one of the following headers, to set a message-property:
+
 RabbitMQ Property|Request Header|Example value
 ---|---|---
 AppId|`RMQ_AppId`|`"MyApp"`
@@ -164,7 +165,7 @@ UserId|`RMQ_UserId`|`"userid"`
 
 *List of supported message-properties*
 
-For more details and an explanation of the message-properties, read official rabbitmq-documentation: https://www.rabbitmq.com/publishers.html#message-properties
+For more details and an explanation of the message-properties, visit the official rabbitmq-documentation: https://www.rabbitmq.com/publishers.html#message-properties
 
 ### Message-Headers
 To define message headers published along with your payload, simply provide more headers.
@@ -237,7 +238,7 @@ Example:
 ```http
 POST https://rabbitmq.proxy:15673
 Content-Type: application/json
-Authorization: Z3Vlc3Q6Z3Vlc3Q=
+Authorization: Basic Z3Vlc3Q6Z3Vlc3Q=
 X-VirtualHost: /
 X-Exchange: example
 X-RoutingKey: my-routing-key
