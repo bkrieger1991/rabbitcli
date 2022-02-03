@@ -1,13 +1,20 @@
 [![.NET](https://github.com/bkrieger1991/rabbittools/actions/workflows/dotnet.yml/badge.svg)](https://github.com/bkrieger1991/rabbittools/actions/workflows/dotnet.yml)
 [![Publish Windows-x64](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish.yml/badge.svg)](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish.yml)
 
+# What is RabbitCLI?
+Rabbit CLI should help you to perform tasks with a RabbitMQ instance, you can't do with the Management UI addon.
+
+This CLI tool helps fetching messages with extended filter functionality, editing messages in queues, moving messages from queue A to B (even with filter functionality), purging messages with a filter applied and more.
+
+It allows you to configure more than one instance, to e.g. perform actions on your local development instance as well on your staging or productive environment.
+
+It's written in C# .NET 5.0 and available for download in the branch `releases`.
+
 - [What is RabbitCLI?](#what-is-rabbitcli)
-- [Download latest release](#download-latest-release)
+- [RabbitMQ HTTP-Proxy Docker-Image](#rabbitmq-http-proxy-docker-image)
+- [Download latest CLI-Tool release](#download-latest-cli-tool-release)
     - [See release branch for all available releases](#see-release-branch-for-all-available-releases)
   - [Installation](#installation)
-- [Contribution & Development](#contribution--development)
-  - [Pull request into `master`](#pull-request-into-master)
-  - [Create a release](#create-a-release)
 - [Commands](#commands)
   - [Configuration](#configuration)
     - [Command: `add-config`](#command-add-config)
@@ -26,37 +33,21 @@
     - [Command: `edit-message`](#command-edit-message)
   - [HTTP-Proxy: Command `proxy`](#http-proxy-command-proxy)
     - [Publishing messages](#publishing-messages)
-      - [Body](#body)
-      - [Content-Type](#content-type)
-      - [Other Message Properties](#other-message-properties)
       - [Message Headers](#message-headers)
+- [Contribution & Development](#contribution--development)
+  - [Pull request into `master`](#pull-request-into-master)
+  - [Create a release](#create-a-release)
 
-# What is RabbitCLI?
-Rabbit CLI should help you to perform tasks with a RabbitMQ instance, you can't do with the Management UI addon.
+# RabbitMQ HTTP-Proxy Docker-Image
+There is a docker-image in the official docker-hub, that enables you to integrate the http-proxy functionality (that is also available using the CLI) in your hosting-environment.
 
-This CLI tool helps fetching messages with extended filter functionality, editing messages in queues, moving messages from queue A to B (even with filter functionality), purging messages with a filter applied and more.
+[Read the documentation on docker-hub for all details: **https://hub.docker.com/r/flux1991/rabbitmq-http-proxy**](https://hub.docker.com/r/flux1991/rabbitmq-http-proxy)
 
-It allows you to configure more than one instance, to e.g. perform actions on your local development instance as well on your staging or productive environment.
-
-It's written in C# .NET 5.0 and available for download in the branch `releases`.
-
-# Download latest release
+# Download latest CLI-Tool release
 ### See [release branch](https://github.com/bkrieger1991/rabbittools/tree/releases) for all available releases
 
 ## Installation
 Just unzip the downloaded archive and either invoke a command (described below) on the `rabbitcli.exe` directly or run the `install.ps1` script to copy the RabbitMQ CLI into `C:\Users\<YourName>\AppData\Local\RabbitCLI\rabbitcli.exe` and adding this path to your user's `PATH` environment variable.
-
-# Contribution & Development
-Feel free to contribute. Just open the solution in VisualStudio. It's built with the VS 2019 Community edition, there is nothing special you have to do.
-
-To later execute and debug commands you have to provide debug-arguments.
-Otherwise, just run the terminal in the build output folder, to refer to the `rabbitcli.exe`.
-
-## Pull request into `master`
-The `master` branch is locked and can only be changed using pull-requests.
-
-## Create a release
-Creating new release-versions is covered by GitHub Actions which will automatically push new archive-versions to `releases` branch.
 
 # Commands
 ## Configuration
@@ -345,6 +336,8 @@ The `proxy` command provides a kind of HTTP-Proxy to publish messages to your co
 
 You can use a tool of your choice that is capable of making (and maybe managing) HTTP-Requests (like [Postman](https://www.postman.com/) or [Thunderclient](https://www.thunderclient.io/) for example).
 
+> This functionality is also available as a docker-image in the official docker-hub to get easily integrated in your existing hosting-environment. See https://hub.docker.com/r/flux1991/rabbitmq-http-proxy for detailed description.
+
 The `proxy` command has following options:
 
 |Option|Default-Value|Description|
@@ -357,23 +350,20 @@ The `proxy` command has following options:
 The `proxy` command starts a web-host on the machine, where it gets executed. Press `CTRL+C` to quit the running web-host.
 
 ### Publishing messages
-When the HTTP Proxy is started, you can start making HTTP Requests with a tool of your choice.
 
-#### Body
-The body of the HTTP Request is the content of your message. The provided content will be taken without any modification (except reading it as a string with UTF8 encoding).
-
-#### Content-Type
-When you provide a `Content-Type` header, it will be set into the RabbitMQ Message Property `content_type`.
-
-#### Other Message Properties
-To fill any other property of the published message, just add a header with the prefix `RMQ-`.
-
-For example:
-
-|Header|Value|Result|
-|---|---|---|
-|`RMQ-Persistent`|`true`|Will set the `Persistent` property of published message to `true`|
-|`RMQ-CorrelationId`|`my-correlation-id`|Will set the `CorrelationId` property of published message to `my-correlation-id`|
+Consider the detailed documentation. Most of it, even when not running the proxy as a docker-container, will also apply to the proxy running in your console, as it is nearly the same: [RabbitMQ HTTP Proxy Docker Image Documentation](src/RabbitMQ.CLI.Proxy/readme.md)
 
 #### Message Headers
 Any HTTP Header that is contained in your request and not gets filtered by `--except-headers` filter, and is not prefixed with `RMQ-` will be published as message-header.
+
+# Contribution & Development
+Feel free to contribute. Just open the solution in VisualStudio. It's built with the VS 2019 Community edition, there is nothing special you have to do.
+
+To later execute and debug commands you have to provide debug-arguments.
+Otherwise, just run the terminal in the build output folder, to refer to the `rabbitcli.exe`.
+
+## Pull request into `master`
+The `master` branch is locked and can only be changed using pull-requests.
+
+## Create a release
+Creating new release-versions is covered by GitHub Actions which will automatically push new archive-versions to `releases` branch.
