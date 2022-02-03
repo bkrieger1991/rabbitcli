@@ -15,7 +15,7 @@ namespace RabbitMQ.CLI.Processors
     {
         private readonly ConfigurationManager _configManager;
         private readonly CancellationTokenSource _cts;
-        
+
         public ProxyProcessor(ConfigurationManager configManager)
         {
             _configManager = configManager;
@@ -25,8 +25,8 @@ namespace RabbitMQ.CLI.Processors
         public async Task<int> CreateProxy(ProxyOptions options)
         {
             var config = _configManager.Get(options.ConfigName);
-            if(!options.Headless) 
-            { 
+            if (!options.Headless)
+            {
                 Console.WriteLine("=== RabbitMQ HTTP Proxy by RabbitCLI ===");
                 Console.WriteLine("Starting proxy WebServer -- Press CTRL+C to quit", Color.DarkGray);
             }
@@ -45,9 +45,9 @@ namespace RabbitMQ.CLI.Processors
                     OutputUsageInfo(options.Port);
                 }
 
-                await Proxy.Program.RunWebHostAsync(new []
+                await Proxy.Program.RunWebHostAsync(new[]
                 {
-                    "--environment=Development", 
+                    "--environment=Development",
                     "--logging=trace",
                     $"--host={config.AmqpAddress}",
                     $"--port={config.AmqpPort}",
@@ -81,7 +81,7 @@ namespace RabbitMQ.CLI.Processors
             Console.WriteLine();
             var propTable = new ConsoleTable("Field", "Info")
             {
-                Options = {EnableCount = false}
+                Options = { EnableCount = false }
             };
             propTable.AddRow("Request Uri", $"http://localhost:{port}");
             propTable.AddRow("Request Method", "POST");
@@ -118,7 +118,7 @@ namespace RabbitMQ.CLI.Processors
             );
             headerTable.Write();
         }
-        
+
         private bool CheckIfPortIsAvailable(int port)
         {
             return IPGlobalProperties.GetIPGlobalProperties()
