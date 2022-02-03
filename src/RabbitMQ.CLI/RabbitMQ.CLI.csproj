@@ -8,7 +8,7 @@
     <PublishSingleFile>true</PublishSingleFile>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
-    <Version>1.4.1</Version>
+    <Version>1.5.0</Version>
     <ApplicationIcon>rabbitcli.ico</ApplicationIcon>
     <Authors>Benjamin Krieger</Authors>
     <Description>A CLI tool to better manage messages in a RabbitMQ instance</Description>
