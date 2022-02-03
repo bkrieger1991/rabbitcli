@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -17,6 +18,8 @@ namespace RabbitMQ.CLI.Proxy.Controllers
         private const string ExchangeHeaderKey = "X-Exchange";
         private const string RoutingKeyHeaderKey = "X-RoutingKey";
         private const string QueueHeaderKey = "X-Queue";
+        private const string VirtualHostHeaderKey = "X-VirtualHost";
+        private const string AuthorizationHeaderKey = "Authorization";
 
         private readonly RabbitMqConfiguration _rabbitMqConfig;
         private readonly RabbitMqClient _client;
@@ -33,7 +36,9 @@ namespace RabbitMQ.CLI.Proxy.Controllers
         public async Task<IActionResult> PublishMessageAsync(
             [FromHeader(Name = QueueHeaderKey)] string queue,
             [FromHeader(Name = ExchangeHeaderKey)] string exchange,
-            [FromHeader(Name = RoutingKeyHeaderKey)] string routingKey
+            [FromHeader(Name = RoutingKeyHeaderKey)] string routingKey,
+            [FromHeader(Name = VirtualHostHeaderKey)] string virtualHost,
+            [FromHeader(Name = AuthorizationHeaderKey)] string authorization
         )
         {
             await using var ms = new MemoryStream();
@@ -44,7 +49,7 @@ namespace RabbitMQ.CLI.Proxy.Controllers
 
             try
             {
-                _client.SetConfig(new Library.Configuration.RabbitMqConfiguration()
+                var configuration = new Library.Configuration.RabbitMqConfiguration()
                 {
                     WebInterfaceAddress = "localhost",
                     WebInterfacePort = 80,
@@ -53,7 +58,24 @@ namespace RabbitMQ.CLI.Proxy.Controllers
                     Username = _rabbitMqConfig.Username,
                     Password = _rabbitMqConfig.Password,
                     VirtualHost = _rabbitMqConfig.VirtualHost
-                });
+                };
+
+                // Check if we should overwrite configured authorization information with request-header
+                if (!string.IsNullOrEmpty(authorization))
+                {
+                    (var username, var password) = GetAuthorization(authorization);
+
+                    configuration.Username = username;
+                    configuration.Password = password;
+                }
+
+                // Check if we should overwrite configured default virtual-host with a given one
+                if (!string.IsNullOrEmpty(virtualHost))
+                {
+                    configuration.VirtualHost = virtualHost;
+                }
+
+                _client.SetConfig(configuration);
 
                 ValidateExchangeAndQueue(exchange, queue);
                 var headerBlacklist = GetHeaderBlacklist();
@@ -129,6 +151,13 @@ namespace RabbitMQ.CLI.Proxy.Controllers
             {
                 throw new Exception("Neither queue nor exchange defined. One of both is required.");
             }
+        }
+
+        private (string username, string password) GetAuthorization(string headerValue)
+        {
+            var decoded = headerValue.FromBase64();
+            var splitted = decoded.Split(":");
+            return (splitted[0], splitted[1]);
         }
     }
 }
