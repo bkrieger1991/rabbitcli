@@ -1,4 +1,4 @@
-﻿namespace RabbitMQ.CLI.Proxy
+﻿namespace RabbitMQ.CLI.Proxy.Shared
 {
     public class RabbitMqConfiguration
     {

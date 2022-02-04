@@ -1,13 +1,11 @@
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using RabbitMQ.Library;
 
-namespace RabbitMQ.CLI.Proxy
+namespace RabbitMQ.CLI.Proxy.Shared
 {
     public class Startup
     {
@@ -38,14 +36,17 @@ namespace RabbitMQ.CLI.Proxy
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app)
         {
-            var logger = app.ApplicationServices.GetRequiredService<ILogger<Startup>>();
-            logger.LogInformation("Swagger endpoint and ui enabled.");
-            app.UseDeveloperExceptionPage()
-                .UseSwagger()
-                .UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "RabbitMQ.CLI.Proxy v1"));
-            
+            if (_configuration.GetSection("EnableSwagger").Get<bool>())
+            {
+                var logger = app.ApplicationServices.GetRequiredService<ILogger<Startup>>();
+                logger.LogInformation("Swagger endpoint and ui enabled.");
+                app.UseDeveloperExceptionPage()
+                    .UseSwagger()
+                    .UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "RabbitMQ.CLI.Proxy v1"));
+            }
+
             app.UseRouting()
                 .UseEndpoints(endpoints =>
                 {

@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading;
 using System.Threading.Tasks;
 using ConsoleTables;
+using Microsoft.Extensions.Hosting;
 using RabbitMQ.CLI.CommandLineOptions;
+using RabbitMQ.CLI.Proxy.Shared;
 using RabbitMQ.Library.Configuration;
 using Console = Colorful.Console;
 
@@ -45,17 +49,22 @@ namespace RabbitMQ.CLI.Processors
                     OutputUsageInfo(options.Port);
                 }
 
-                await Proxy.Program.RunWebHostAsync(new[]
-                {
-                    "--environment=Development",
-                    "--logging=trace",
-                    $"--host={config.AmqpAddress}",
-                    $"--port={config.AmqpPort}",
-                    $"--username={config.Username}",
-                    $"--password={config.Password}",
-                    $"--vhost={config.VirtualHost}",
-                    $"--header-blacklist={options.ExceptHeaders}"
-                }, options.Port, _cts.Token);
+                var host = ProxyHostBuilder.CreateHostBuilder(
+                    options.Port, 
+                    new[]
+                    {
+                        "--environment=Development",
+                        "--logging=trace",
+                        $"--host={config.AmqpAddress}",
+                        $"--port={config.AmqpPort}",
+                        $"--username={config.Username}",
+                        $"--password={config.Password}",
+                        $"--vhost={config.VirtualHost}",
+                        $"--header-blacklist={options.ExceptHeaders}"
+                    }
+                );
+
+                await host.Build().RunAsync(_cts.Token);
             }
             catch (Exception ex)
             {

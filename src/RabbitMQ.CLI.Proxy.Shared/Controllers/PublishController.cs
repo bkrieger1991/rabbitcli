@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Buffers.Text;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,7 +9,7 @@ using Microsoft.Extensions.Logging;
 using RabbitMQ.Client.Exceptions;
 using RabbitMQ.Library;
 
-namespace RabbitMQ.CLI.Proxy.Controllers
+namespace RabbitMQ.CLI.Proxy.Shared.Controllers
 {
     [ApiController]
     [Route("")]

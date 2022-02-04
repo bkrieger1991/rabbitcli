@@ -6,7 +6,7 @@ When hosted in your environment, you gain an advantage of integrating applicatio
 
 When you do not have the need of integrate applications to publish messages to your rabbitmq instance, you still can use this tool for your development or staging environment, to simulate publishing messages to rabbitmq, using your favorite HTTP-Tool (*Postman*, etc.) and take advantage of stored requests, shared across your team.
 
-The port inside the container, where the HTTP-API is available, is `15673`.
+The port inside the container, where the HTTP-API is available, is `5000`.
 
 # Quick references
 **GitHub repository:** https://github.com/bkrieger1991/rabbitcli<br>
@@ -41,7 +41,7 @@ docker run --net host --name rabbitmq-proxy -d flux1991/rabbitmq-http-proxy:late
 ```
 ...where `rabbitmq-proxy` is the name of your container
 
-The container will try to connect a rabbitmq-instance running on `localhost:5672` with `guest:guest` credentials, when you publish a message to the container API on `http://localhost:15673`.
+The container will try to connect a rabbitmq-instance running on `localhost:5672` with `guest:guest` credentials, when you publish a message to the container API on `http://localhost:5000`.
 
 ## Provide settings
 All required settings to connect to the proper rabbitmq-instance will be passed using environment-parameters:
@@ -56,7 +56,7 @@ RabbitMQ__VirtualHost|/
 
 ## Full example
 ```sh
-docker run -d --name rabbitmq-proxy -p 15673:15673 \
+docker run -d --name rabbitmq-proxy -p 5000:5000 \
     -e "RabbitMQ__Host|your.rabbitmq.instance" \
     -e "RabbitMQ__Port|5672" \
     -e "RabbitMQ__Username|rabbitmquser" \
@@ -72,7 +72,7 @@ services:
     image: flux1991/rabbitmq-http-proxy:latest
     container_name: rabbitmq-proxy
     ports:
-      - 15673:15673
+      - 5000:5000
     environment:
       - RabbitMQ__Host=your.rabbitmq.instance
       - RabbitMQ__Port=5672
@@ -106,7 +106,7 @@ services:
     image: flux1991/rabbitmq-http-proxy:latest
     container_name: rabbitmq-proxy
     ports:
-      - 15673:15673
+      - 5000:5000
     environment:
       - ASPNETCORE_ENVIRONMENT=docker
     volumes:
@@ -121,7 +121,7 @@ The filename-part `docker` or `appsettings.<something>.json`, where `<something>
 This configuration pattern is a built-in feature of Microsoft's `ASP.NET Core`.
 
 # Using the proxy
-Once your container is up and running, you can start publishing messages using `HTTP POST` requests to the host, where your container is available, using the mapped port (default: `15673`).
+Once your container is up and running, you can start publishing messages using `HTTP POST` requests to the host, where your container is available, using the mapped port (default: `5000`).
 
 `POST https://<your-host>:<port>/`
 
@@ -174,7 +174,7 @@ For example, if you provide a header with name `X-MyCustomHeader` or `MyOtherCus
 
 ### Example request
 ```http
-POST https://rabbitmq.proxy:15673
+POST http://rabbitmq.proxy:5000
 Content-Type: application/json
 X-Exchange: example
 X-RoutingKey: my-routing-key
@@ -236,7 +236,7 @@ The authentication will made against a user-account you must create in your rabb
 Example:
 
 ```http
-POST https://rabbitmq.proxy:15673
+POST http://rabbitmq.proxy:5000
 Content-Type: application/json
 Authorization: Basic Z3Vlc3Q6Z3Vlc3Q=
 X-VirtualHost: /
@@ -250,3 +250,14 @@ X-RoutingKey: my-routing-key
 *HTTP request code*
 
 Where the `Authorization` request header contains the basic-authentication credentials of `guest:guest`.
+
+## Swagger and Swagger UI
+Swagger UI is enabled per default. It's available at the `/swagger` endpoint:
+```uri
+http://rabbitmq.proxy:5000/swagger
+```
+
+If you want to disable the swagger user interface, you can provide an environment-parameter:
+```sh
+docker run ... -e "EnableSwagger=false" ...
+```
