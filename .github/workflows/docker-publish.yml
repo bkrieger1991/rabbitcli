@@ -15,7 +15,7 @@ jobs:
         name: docker-tag-version
         path: ./artifact/
   build-docker-compose:
-    needs: docker-tag-version
+    needs: get-tag-version
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
