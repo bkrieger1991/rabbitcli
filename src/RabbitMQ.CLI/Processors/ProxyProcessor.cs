@@ -53,7 +53,7 @@ namespace RabbitMQ.CLI.Processors
                     options.Port, 
                     new[]
                     {
-                        "--environment=Development",
+                        "--enable-swagger=true",
                         "--logging=trace",
                         $"--host={config.AmqpAddress}",
                         $"--port={config.AmqpPort}",

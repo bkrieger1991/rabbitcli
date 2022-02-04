@@ -18,7 +18,7 @@ namespace RabbitMQ.CLI.Proxy.Shared
                 ["--password"] = "RabbitMQ:Password",
                 ["--vhost"] = "RabbitMQ:VirtualHost",
                 ["--header-blacklist"] = "RabbitMQ:HeaderBlacklist",
-                ["--environment"] = "ASPNETCORE_ENVIRONMENT",
+                ["--enable-swagger"] = "EnableSwagger",
                 ["--logging"] = "Logging:LogLevel:Default",
                 ["-h"] = "RabbitMQ:Host",
                 ["-p"] = "RabbitMQ:Port",
