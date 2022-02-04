@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -113,7 +114,7 @@ namespace RabbitMQ.CLI.Proxy.Shared.Controllers
                     _client.PublishMessageToQueue(queue, routingKey, payload, parameters);
                 }
 
-                return Accepted(new {Message = "Sucessful published message"});
+                return Accepted(new {Message = "Successful published message"});
             }
             catch (Exception e) when (e.InnerException is AuthenticationFailureException)
             {
@@ -169,6 +170,7 @@ namespace RabbitMQ.CLI.Proxy.Shared.Controllers
                 .ToDictionary(kv => kv.Key, kv => kv.Value.ToString());
         }
 
+        [AssertionMethod]
         private void ValidateExchangeAndQueue(string exchange, string queue)
         {
             if (!string.IsNullOrWhiteSpace(exchange) && !string.IsNullOrWhiteSpace(queue))
@@ -187,8 +189,8 @@ namespace RabbitMQ.CLI.Proxy.Shared.Controllers
         private (string username, string password) GetAuthorization(string headerValue)
         {
             var decoded = headerValue.Replace("Basic ", "").FromBase64();
-            var splitted = decoded.Split(":");
-            return (splitted[0], splitted[1]);
+            var split = decoded.Split(":");
+            return (split[0], split[1]);
         }
     }
 }

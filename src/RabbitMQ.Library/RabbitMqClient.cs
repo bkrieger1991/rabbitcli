@@ -14,6 +14,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Library.Configuration;
 using RabbitMQ.Library.Helper;
 using RabbitMQ.Library.Models;
+// ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
 
 namespace RabbitMQ.Library
 {
@@ -600,7 +601,7 @@ namespace RabbitMQ.Library
             switch (type)
             {
                 case "number":
-                    if (!int.TryParse(value, out int number))
+                    if (!int.TryParse(value, out var number))
                     {
                         _logger.LogDebug($"Input of user ('{value}') cannot be parsed as number");
                         throw new Exception($"Error parsing input '{value}' as number.");

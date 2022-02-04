@@ -191,7 +191,7 @@ namespace RabbitMQ.CLI.Processors
                         // 1. Split by newline
                         // 2. Remove empty lines
                         // 3. Skip first 3 lines (header)
-                        // 4. Take data line and row seperator
+                        // 4. Take data line and row separator
                         // 5. Append newline
                         table = string.Join(Environment.NewLine,
                             table.Split(Environment.NewLine.ToCharArray())

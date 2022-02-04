@@ -10,7 +10,7 @@ namespace RabbitMQ.Library.Configuration
     public class ConfigurationManager
     {
         private Configuration _config;
-        private string _encryptionKey;
+        private readonly string _encryptionKey;
 
         public ConfigurationManager()
         {
@@ -22,11 +22,6 @@ namespace RabbitMQ.Library.Configuration
         {
             EnsureConfigFileExists();
             LoadConfiguration();
-        }
-
-        public bool Exists(string name)
-        {
-            return _config.ConfigurationCollection.ContainsKey(name);
         }
 
         public void SetProperty(string property, string value)
