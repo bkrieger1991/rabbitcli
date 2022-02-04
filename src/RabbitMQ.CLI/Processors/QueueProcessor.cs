@@ -31,13 +31,13 @@ namespace RabbitMQ.CLI.Processors
 
             if (!string.IsNullOrWhiteSpace(options.QueueId))
             {
-                await OutputSingleQueue(config, null, options.QueueId);
+                await OutputSingleQueue(null, options.QueueId);
                 return 0;
             }
 
             if (!string.IsNullOrWhiteSpace(options.QueueName))
             {
-                await OutputSingleQueue(config, options.QueueName);
+                await OutputSingleQueue(options.QueueName);
                 return 0;
             }
 
@@ -45,7 +45,7 @@ namespace RabbitMQ.CLI.Processors
             return 0;
         }
 
-        private async Task OutputSingleQueue(RabbitMqConfiguration config, string queueName = null, string queueHash = null)
+        private async Task OutputSingleQueue(string queueName = null, string queueHash = null)
         {
             var (queue, bindings) = queueName == null 
                 ? await _rmqClient.GetQueueByHash(queueHash)

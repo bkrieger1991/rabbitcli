@@ -76,6 +76,7 @@ namespace RabbitMQ.Library
             var queue = await _apiClient.GetQueueAsync(name, _vhost);
             var bindings = await _apiClient.GetBindingsForQueueAsync(queue);
 
+            _logger.LogDebug($"Retrieved data for queue: {queue}");
             return (queue, bindings.ToArray());
         }
 
@@ -102,6 +103,7 @@ namespace RabbitMQ.Library
         public async Task<Queue[]> GetQueues()
         {
             var queues = await _apiClient.GetQueuesAsync(_vhost);
+            _logger.LogDebug($"Retrieved {queues.Count} queues in total.");
             return queues.ToArray();
         }
 
@@ -155,7 +157,7 @@ namespace RabbitMQ.Library
         {
             await ValidateArguments(arguments);
             var inputArgs = new InputArguments();
-            Log("Converting input-arguments for queue-creation. Resolving typed values...");
+            _logger.LogDebug("Converting input-arguments for queue-creation. Resolving typed values...");
             arguments.ToList().ForEach(a => inputArgs.Add(a.Key, GetTypedValue(a.Value, a.Type)));
 
             try
@@ -175,7 +177,7 @@ namespace RabbitMQ.Library
                 .Where(e => e.Vhost == _config.VirtualHost)
                 .ToArray();
 
-            Log($"Requested {filtered.Length} exchanges for vhost '{_config.VirtualHost}' from API");
+            _logger.LogDebug($"Requested {filtered.Length} exchanges for vhost '{_config.VirtualHost}' from API");
 
             return filtered;
         }
@@ -278,7 +280,7 @@ namespace RabbitMQ.Library
             // Generate a random named new queue
             var tempQueueName = Randomizer.GenerateWithGuid("RMQM_LV_");
             var tempQueue = await CreateQueue(tempQueueName);
-            Log($"Creating temporary queue: {tempQueueName}...");
+            _logger.LogDebug($"Creating temporary queue: {tempQueueName}...");
             try
             {
 
@@ -298,7 +300,7 @@ namespace RabbitMQ.Library
                     if (binding.DestinationType == "queue")
                     {
                         var info = new BindingInfo(binding.RoutingKey);
-                        Log($"Create binding [{exchange.Name}] ==({binding.RoutingKey})==> [TempQueue]");
+                        _logger.LogDebug($"Create binding [{exchange.Name}] ==({binding.RoutingKey})==> [TempQueue]");
                         await _apiClient.CreateBindingAsync(exchange, tempQueue, info);
                     }
                 }
@@ -308,7 +310,7 @@ namespace RabbitMQ.Library
             catch (Exception e)
             {
                 await DeleteQueue(tempQueue.Name);
-                Log(e, $"Deleting temporary queue due to exception: {e.Message}...");
+                _logger.LogDebug(e, $"Deleting temporary queue due to exception: {e.Message}...");
                 throw;
             }
         }
@@ -354,7 +356,7 @@ namespace RabbitMQ.Library
             var queue = await _apiClient.GetQueueAsync(name, _vhost);
             if (queue == null)
             {
-                Log("User wanted to delete a queue, that is not contained in the provided virtual-host");
+                _logger.LogDebug("User wanted to delete a queue, that is not contained in the provided virtual-host");
                 throw new Exception("Queue not found in virtual host.");
             }
 
@@ -453,25 +455,25 @@ namespace RabbitMQ.Library
                 var messageCount = 0;
                 var passedCount = 0;
 
-                Log($"Iterating messages of queue '{queue}'. Starting BasicGet's...");
+                _logger.LogDebug($"Iterating messages of queue '{queue}'. Starting BasicGet's...");
                 do
                 {
                     msg = model.BasicGet(queue, false);
                     if (msg != null && MatchesFilter(msg, filter))
                     {
                         passedCount++;
-                        Log($"[{msg.DeliveryTag}] filter passed, calling callback...");
+                        _logger.LogDebug($"[{msg.DeliveryTag}] filter passed, calling callback...");
                         callback(model, msg);
                     }
                     messageCount++;
                     if (limit != 0 && passedCount >= limit)
                     {
-                        Log("Limit of messages to process reached, leaving...");
+                        _logger.LogDebug("Limit of messages to process reached, leaving...");
                         break;
                     }
                 } while (msg != null && cancellationToken.IsCancellationRequested == false);
 
-                Log($"Iterator finished. Filtered {passedCount} messages. Ignored {(messageCount - 1) - passedCount} messages, since they did not pass the filter");
+                _logger.LogDebug($"Iterator finished. Filtered {passedCount} messages. Ignored {(messageCount - 1) - passedCount} messages, since they did not pass the filter");
 
                 model.Close();
                 connection.Close();
@@ -564,12 +566,12 @@ namespace RabbitMQ.Library
 
         private async Task ValidateArguments(QueueCreateArgument[] arguments)
         {
-            Log("Validating attributes for queue-creation...");
+            _logger.LogDebug("Validating attributes for queue-creation...");
             // Rule 1: no deadletter-routing-key without deadletter-exchange
             if (arguments.Any(a => a.Key == "x-dead-letter-routing-key")
                 && arguments.All(a => a.Key != "x-dead-letter-exchange"))
             {
-                Log("User provided deadletter-routingkey without a deadletter-exchange");
+                _logger.LogDebug("User provided deadletter-routingkey without a deadletter-exchange");
                 throw new Exception("Deadletter-Exchange name required when providing an Deadletter-RoutingKey.");
             }
 
@@ -577,7 +579,7 @@ namespace RabbitMQ.Library
             if (arguments.Any(a => a.Key == "x-queue-mode") &&
                 arguments.FirstOrDefault(a => a.Key == "x-queue-mode")?.Value != "lazy")
             {
-                Log("User provided an unknown queue-mode");
+                _logger.LogDebug("User provided an unknown queue-mode");
                 throw new Exception("Illegal value for Queue-Mode. Only value 'lazy' is allowed.");
             }
 
@@ -587,7 +589,7 @@ namespace RabbitMQ.Library
                 var exchanges = await GetExchanges();
                 if (exchanges.All(e => e.Name != arguments.FirstOrDefault(a => a.Key == "x-dead-letter-exchange")?.Value))
                 {
-                    Log("User provided a deadletter-exchange that does not exist");
+                    _logger.LogDebug("User provided a deadletter-exchange that does not exist");
                     throw new Exception("The exchange you provided in the Deadletter-Exchange does not exist.");
                 }
             }
@@ -600,7 +602,7 @@ namespace RabbitMQ.Library
                 case "number":
                     if (!int.TryParse(value, out int number))
                     {
-                        Log($"Input of user ('{value}') cannot be parsed as number");
+                        _logger.LogDebug($"Input of user ('{value}') cannot be parsed as number");
                         throw new Exception($"Error parsing input '{value}' as number.");
                     }
 
@@ -620,26 +622,13 @@ namespace RabbitMQ.Library
                     }
                     else
                     {
-                        Log($"Input of user ('{value}') cannot be parsed as boolean");
+                        _logger.LogDebug($"Input of user ('{value}') cannot be parsed as boolean");
                         throw new Exception($"Error parsing input '{value}' as boolean. Possible values are: {string.Join(", ", trueValues.Concat(falseValues))}");
                     }
                 default:
-                    Log($"Given value type ('{type}') does not exist");
+                    _logger.LogDebug($"Given value type ('{type}') does not exist");
                     throw new Exception($"The given type '{type}' is not implemented.");
             }
-        }
-
-        private void Log(string message)
-        {
-            // Debugging...
-            // Console.WriteLine(message);
-        }
-
-        private void Log(Exception e, string message)
-        {
-            // Debugging...
-            // Console.WriteLine(message);
-            // Console.WriteLine(e);
         }
     }
 }

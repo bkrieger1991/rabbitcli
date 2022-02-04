@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using FluentAssertions;
 using Newtonsoft.Json;
@@ -67,8 +66,10 @@ namespace RabbitMQ.Library.Test
 
             var deserialized = JsonConvert.DeserializeObject<Dictionary<string, object>>(manager.WrittenConfig);
             var key = nameof(Configuration.Configuration.ConfigurationCollection);
+            deserialized.Should().NotBeNull();
             deserialized.Should().ContainKey(key);
-            var configDict = JsonConvert.DeserializeObject<Dictionary<string, string>>((deserialized[key] as JObject).ToString());
+            var value = (deserialized[key] as JObject)?.ToString();
+            var configDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(value ?? "{}");
             configDict.Should().ContainKey("unit-test-config");
         }
     }

@@ -36,7 +36,7 @@ namespace RabbitMQ.CLI.Processors
             var config = _configManager.Get(options.ConfigName);
             _rmqClient.SetConfig(config);
 
-            var queueName = await GetQueueNameFromOptions(options.QueueName, options.QueueId, config);
+            var queueName = await GetQueueNameFromOptions(options.QueueName, options.QueueId);
 
             if (options.LiveView)
             {
@@ -58,7 +58,7 @@ namespace RabbitMQ.CLI.Processors
         {
             var config = _configManager.Get(options.ConfigName);
             _rmqClient.SetConfig(config);
-            var queueName = await GetQueueNameFromOptions(options.QueueName, options.QueueId, config);
+            var queueName = await GetQueueNameFromOptions(options.QueueName, options.QueueId);
 
             if (!string.IsNullOrWhiteSpace(options.Hash))
             {
@@ -80,8 +80,8 @@ namespace RabbitMQ.CLI.Processors
             var config = _configManager.Get(options.ConfigName);
             _rmqClient.SetConfig(config);
 
-            var fromName = await GetQueueNameFromOptions(options.FromName, options.FromId, config);
-            var toName = await GetQueueNameFromOptions(options.ToName, options.ToId, config);
+            var fromName = await GetQueueNameFromOptions(options.FromName, options.FromId);
+            var toName = await GetQueueNameFromOptions(options.ToName, options.ToId);
 
             if (options.CreateNew)
             {
@@ -101,7 +101,7 @@ namespace RabbitMQ.CLI.Processors
         {
             var config = _configManager.Get(options.ConfigName);
             _rmqClient.SetConfig(config);
-            var queueName = await GetQueueNameFromOptions(options.QueueName, options.QueueId, config);
+            var queueName = await GetQueueNameFromOptions(options.QueueName, options.QueueId);
             var editor = _configManager.GetProperty(nameof(Configuration.TextEditorPath));
             if (editor == "notepad")
             {
@@ -289,7 +289,7 @@ namespace RabbitMQ.CLI.Processors
 
             if (options.ContentOnly)
             {
-                Console.WriteLine(message.Content, ConsoleColors.JsonColor);
+                Console.WriteLine(message?.Content, ConsoleColors.JsonColor);
             }
             else
             {
@@ -349,7 +349,7 @@ namespace RabbitMQ.CLI.Processors
             return Path.Combine(targetDirectory, filename);
         }
 
-        private string DrawMessageTable(GetMessagesOptions options, AmqpMessage[] messages, bool showCount = true)
+        private string DrawMessageTable(GetMessagesOptions options, AmqpMessage[] messages, bool showCount)
         {
             var columns = new List<string>() {"Hash", "Content-Type", "Content (shorten)", "Exchange"};
             if (options.ShowHeaders)
@@ -372,7 +372,7 @@ namespace RabbitMQ.CLI.Processors
             return table.ToString();
         }
 
-        private async Task<string> GetQueueNameFromOptions(string queueName, string queueId, RabbitMqConfiguration config)
+        private async Task<string> GetQueueNameFromOptions(string queueName, string queueId)
         {
             if (string.IsNullOrWhiteSpace(queueName) && string.IsNullOrWhiteSpace(queueId))
             {

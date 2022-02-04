@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace RabbitMQ.Library.Configuration
+﻿namespace RabbitMQ.Library.Configuration
 {
     public class RabbitMqConfiguration
     {
