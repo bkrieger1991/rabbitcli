@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Buffers.Text;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using AutoMapper;
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using RabbitMQ.Client;
 using RabbitMQ.Library.Configuration;
@@ -94,6 +94,7 @@ namespace RabbitMQ.Library
             return resultStream.ToArray();
         }
 
+        [AssertionMethod]
         private static void CheckKeyAndThrow(string key)
         {
             if (string.IsNullOrEmpty(key))
@@ -102,6 +103,7 @@ namespace RabbitMQ.Library
             }
         }
 
+        [AssertionMethod]
         private static void CheckTextAndThrow(string text)
         {
             if (string.IsNullOrEmpty(text))

@@ -9,7 +9,7 @@ namespace RabbitMQ.CLI.CommandLineOptions
         public string QueueName { get; set; }
         [Option("qid", Required = false, HelpText = "Provide a queue hash to request information about the single queue")]
         public string QueueId { get; set; }
-        [Option("sort", Required = false, HelpText = "Provide a fieldname of a queue to sort for it")]
+        [Option("sort", Required = false, HelpText = "Provide a field-name of a queue to sort for it")]
         public string Sort { get; set; }
         [Option("desc", Required = false, HelpText = "Sort descending")]
         public bool Descending { get; set; }

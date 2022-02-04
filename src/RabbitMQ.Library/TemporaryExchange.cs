@@ -8,9 +8,9 @@ namespace RabbitMQ.Library
     {
         private readonly IModel _model;
 
-        public string Name { get; set; }
+        public string Name { get; }
 
-        public TemporaryExchange(IModel model, string name)
+        private TemporaryExchange(IModel model, string name)
         {
             Name = name;
             _model = model;

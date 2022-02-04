@@ -50,4 +50,4 @@ jobs:
         context: "."
         push: true
         file: src/RabbitMQ.CLI.Proxy/Dockerfile
-        tags: flux1991/rabbitmq-http-proxy:${{ steps.version.outputs.version }}
+        tags: flux1991/rabbitmq-http-proxy:latest,flux1991/rabbitmq-http-proxy:${{ steps.version.outputs.version }}

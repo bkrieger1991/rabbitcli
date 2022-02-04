@@ -56,7 +56,7 @@ namespace RabbitMQ.CLI
                         (MoveMessagesOptions o) => _messageProcessor.MoveMessages(o),
                         (EditMessageOptions o) => _messageProcessor.EditMessage(o),
                         (ProxyOptions o) => _proxyProcessor.CreateProxy(o),
-                        err => Task.FromResult(-1)
+                        _ => Task.FromResult(-1)
                     );
             }
             catch (Exception e)

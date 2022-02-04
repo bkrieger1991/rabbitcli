@@ -10,7 +10,7 @@
 
     <AssemblyName>rabbitcli</AssemblyName>
 
-    <Version>1.5.0</Version>
+    <Version>1.5.1</Version>
     <ApplicationIcon>rabbitcli.ico</ApplicationIcon>
     <Authors>Benjamin Krieger</Authors>
     <Copyright>Benjamin Krieger</Copyright>
@@ -25,6 +25,7 @@
     <PackageReference Include="Colorful.Console" Version="1.2.15" />
     <PackageReference Include="CommandLineParser" Version="2.8.0" />
     <PackageReference Include="ConsoleTables" Version="2.4.2" />
+    <PackageReference Include="JetBrains.Annotations" Version="2021.3.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
     <PackageReference Include="MimeSharp" Version="1.0.0" />
