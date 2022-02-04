@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Text;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -23,6 +24,13 @@ namespace RabbitMQ.Library
             services.AddAutoMapper(cfg => cfg.AddMaps(typeof(MessageMapping).Assembly));
 
             return services;
+        }
+
+        public static string FromBase64(this string base64)
+        {
+            return Encoding.UTF8.GetString(
+                Convert.FromBase64String(base64)
+            );
         }
 
         public static IBasicProperties CreateBasicProperties(this IModel model, AmqpMessage message, IMapper mapper)

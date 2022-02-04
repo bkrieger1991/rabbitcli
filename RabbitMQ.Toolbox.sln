@@ -15,8 +15,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RabbitMQ.Library.Test", "te
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F9DC8D5B-4668-42F3-BA15-DB0574B6F132}"
 	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
+		docker-compose.yaml = docker-compose.yaml
 		readme.md = readme.md
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RabbitMQ.CLI.Proxy", "src\RabbitMQ.CLI.Proxy\RabbitMQ.CLI.Proxy.csproj", "{E33BA4D2-B48F-4C36-A68F-6AE1D0FF57A5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RabbitMQ.CLI.Proxy.Shared", "src\RabbitMQ.CLI.Proxy.Shared\RabbitMQ.CLI.Proxy.Shared.csproj", "{7A407C3E-0C3B-465C-A985-687A3C9220D7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,6 +42,14 @@ Global
 		{D44DFAB3-E31C-404A-BE0C-5A2F24FCB0A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D44DFAB3-E31C-404A-BE0C-5A2F24FCB0A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D44DFAB3-E31C-404A-BE0C-5A2F24FCB0A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E33BA4D2-B48F-4C36-A68F-6AE1D0FF57A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E33BA4D2-B48F-4C36-A68F-6AE1D0FF57A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E33BA4D2-B48F-4C36-A68F-6AE1D0FF57A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E33BA4D2-B48F-4C36-A68F-6AE1D0FF57A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A407C3E-0C3B-465C-A985-687A3C9220D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A407C3E-0C3B-465C-A985-687A3C9220D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A407C3E-0C3B-465C-A985-687A3C9220D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A407C3E-0C3B-465C-A985-687A3C9220D7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -44,6 +58,8 @@ Global
 		{AF86125F-3DBC-469E-9542-95FBDDC95EF4} = {78DA39B0-1F6F-4E93-9C60-2B528285D1B6}
 		{BC7A366B-A43B-485F-A1AD-0DBB1F6F1704} = {78DA39B0-1F6F-4E93-9C60-2B528285D1B6}
 		{D44DFAB3-E31C-404A-BE0C-5A2F24FCB0A4} = {DF138F67-58AD-435D-8815-0786E3EAB89C}
+		{E33BA4D2-B48F-4C36-A68F-6AE1D0FF57A5} = {78DA39B0-1F6F-4E93-9C60-2B528285D1B6}
+		{7A407C3E-0C3B-465C-A985-687A3C9220D7} = {78DA39B0-1F6F-4E93-9C60-2B528285D1B6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1B0C3821-AA8B-42C6-843D-50A3A846CB5B}

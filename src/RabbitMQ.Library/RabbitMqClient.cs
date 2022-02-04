@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using EasyNetQ.Management.Client;
 using EasyNetQ.Management.Client.Model;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Library.Configuration;
 using RabbitMQ.Library.Helper;
@@ -19,14 +20,16 @@ namespace RabbitMQ.Library
     public class RabbitMqClient
     {
         private readonly IMapper _mapper;
+        private readonly ILogger<RabbitMqClient> _logger;
         private ManagementClient _apiClient;
         private RabbitMqConfiguration _config;
         private Vhost _vhost;
         private ConnectionFactory _amqpConnectionFactory;
 
-        public RabbitMqClient(IMapper mapper)
+        public RabbitMqClient(IMapper mapper, ILogger<RabbitMqClient> logger)
         {
             _mapper = mapper;
+            _logger = logger;
         }
 
         public RabbitMqClient SetConfig(RabbitMqConfiguration config)
@@ -365,10 +368,12 @@ namespace RabbitMQ.Library
             IDictionary<string, string> parameters
         )
         {
+            _logger.LogInformation($"Connecting to {_amqpConnectionFactory.HostName}:{_amqpConnectionFactory.Port} with user {_amqpConnectionFactory.UserName}...");
             using var connection = _amqpConnectionFactory.CreateConnection();
             using var model = connection.CreateModel();
             // Create IBasicProperties and map given values in parameters into it
             var properties = CreatePublishPropertiesFromParameters(model, parameters);
+            _logger.LogDebug($"Publishing message to exchange {exchange}...");
             model.BasicPublish(exchange, routingKey, false, properties, content);
         }
 
@@ -379,12 +384,14 @@ namespace RabbitMQ.Library
             IDictionary<string, string> parameters
         )
         {
+            _logger.LogInformation($"Connecting to {_amqpConnectionFactory.HostName}:{_amqpConnectionFactory.Port} with user {_amqpConnectionFactory.UserName}...");
             using var connection = _amqpConnectionFactory.CreateConnection();
             using var model = connection.CreateModel();
             using var tempExchange = TemporaryExchange.Create(model).BindTo(queue);
 
             // Create IBasicProperties and map given values in parameters into it
             var properties = CreatePublishPropertiesFromParameters(model, parameters);
+            _logger.LogDebug($"Publishing message to temporary exchange, bound to queue {queue}...");
             tempExchange.Publish(properties, content, routingKey);
         }
 

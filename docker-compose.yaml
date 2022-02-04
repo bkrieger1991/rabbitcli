@@ -1,0 +1,7 @@
+# Contains the docker containers released by this solution
+version: '3.5'
+services:
+  proxy:
+    build: 
+      context: .
+      dockerfile: src/RabbitMQ.CLI.Proxy/Dockerfile

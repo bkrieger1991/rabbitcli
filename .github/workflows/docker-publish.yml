@@ -1,0 +1,50 @@
+name: Publish Docker Image
+
+on: workflow_dispatch
+
+jobs:
+  get-tag-version:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Write version into file
+      run: grep -oP "(<Version>).*(</Version>)" src/RabbitMQ.CLI/RabbitMQ.CLI.csproj | awk -F '[><]' '{print $3}' > artifact/version
+    - name: Save Version File
+      uses: actions/upload-artifact@v2
+      with:
+        name: docker-tag-version
+        path: ./artifact/
+  build-docker-compose:
+    needs: docker-tag-version
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/download-artifact@v2
+      with:
+        name: docker-tag-version
+        path: docker-tag
+    - name: Display structure of downloaded files
+      run: ls -Rla
+      working-directory: ./
+    - name: Get version string
+      id: version
+      run: echo "::set-output name=version::$(cat docker-tag/version)"
+    - name: Output version
+      run: echo Got version for image tag - $VERSION
+      env:
+        VERSION: ${{ steps.version.outputs.version }}
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+    - name: Login to DockerHub
+      uses: docker/login-action@v1 
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Build & Tag image
+      uses: docker/build-push-action@v2
+      with:
+        context: "."
+        push: true
+        tags: flux1991/rabbitmq-http-proxy:${{ steps.version.outputs.version }}

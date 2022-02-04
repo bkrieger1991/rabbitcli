@@ -3,16 +3,18 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
-    <AssemblyName>rabbitcli</AssemblyName>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
-    <Version>1.4.0</Version>
+
+    <AssemblyName>rabbitcli</AssemblyName>
+
+    <Version>1.5.0</Version>
     <ApplicationIcon>rabbitcli.ico</ApplicationIcon>
     <Authors>Benjamin Krieger</Authors>
-    <Description>A CLI tool to better manage messages in a RabbitMQ instance</Description>
     <Copyright>Benjamin Krieger</Copyright>
+    <Description>A CLI tool to better manage messages in a RabbitMQ instance</Description>
     <PackageProjectUrl>https://bkrieger1991.github.io/rabbitcli/</PackageProjectUrl>
     <PackageIcon>rabbitcli.ico</PackageIcon>
     <RepositoryUrl>https://github.com/bkrieger1991/rabbitcli</RepositoryUrl>
@@ -20,7 +22,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.App" Version="5.0.0" />
     <PackageReference Include="Colorful.Console" Version="1.2.15" />
     <PackageReference Include="CommandLineParser" Version="2.8.0" />
     <PackageReference Include="ConsoleTables" Version="2.4.2" />
@@ -29,7 +30,7 @@
     <PackageReference Include="MimeSharp" Version="1.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
-
+    
     <!-- Strange... -->
     <PackageReference Include="System.Runtime.Extensions" Version="4.3.0" />
     <PackageReference Include="System.Collections" Version="4.3.0" />
@@ -38,6 +39,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\RabbitMQ.CLI.Proxy.Shared\RabbitMQ.CLI.Proxy.Shared.csproj" />
     <ProjectReference Include="..\RabbitMQ.Library\RabbitMQ.Library.csproj" />
   </ItemGroup>
 
