@@ -39,9 +39,9 @@ The port inside the container, where the HTTP-API is available, is `5000`.
 
 # How to use this image
 ```sh
-docker run --net host --name rabbitmq-proxy -d flux1991/rabbitmq-http-proxy:latest
+docker run -p 5000:5000 --name rabbitproxy --link <your-rabbitmq-container> -d flux1991/rabbitmq-http-proxy:latest
 ```
-...where `rabbitmq-proxy` is the name of your container
+...where `rabbitproxy` is the name of your container
 
 The container will try to connect a rabbitmq-instance running on `localhost:5672` with `guest:guest` credentials, when you publish a message to the container API on `http://localhost:5000`.
 
