@@ -7,8 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - name: Create artifact directory
+      run: mkdir artifact
     - name: Write version into file
-      run: grep -oP "(<Version>).*(</Version>)" src/RabbitMQ.CLI/RabbitMQ.CLI.csproj | awk -F '[><]' '{print $3}' > artifact/version
+      run: grep -oP "(<Version>).*(</Version>)" src/RabbitMQ.CLI.Proxy/RabbitMQ.CLI.Proxy.csproj | awk -F '[><]' '{print $3}' > artifact/version
     - name: Save Version File
       uses: actions/upload-artifact@v2
       with:
