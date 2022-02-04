@@ -4,8 +4,10 @@ FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 ### Build
 WORKDIR /src
 COPY ["src/RabbitMQ.CLI.Proxy/RabbitMQ.CLI.Proxy.csproj", "src/RabbitMQ.CLI.Proxy/"]
+COPY ["src/RabbitMQ.CLI.Proxy.Shared/RabbitMQ.CLI.Proxy.Shared.csproj", "src/RabbitMQ.CLI.Proxy.Shared/"]
 COPY ["src/RabbitMQ.Library/RabbitMQ.Library.csproj", "src/RabbitMQ.Library/"]
 RUN dotnet restore "src/RabbitMQ.Library/RabbitMQ.Library.csproj"
+RUN dotnet restore "src/RabbitMQ.CLI.Proxy.Shared/RabbitMQ.CLI.Proxy.Shared.csproj"
 RUN dotnet restore "src/RabbitMQ.CLI.Proxy/RabbitMQ.CLI.Proxy.csproj"
 COPY . .
 WORKDIR "/src/src/RabbitMQ.CLI.Proxy"
@@ -16,6 +18,5 @@ RUN dotnet publish --no-restore --no-build -c Release -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-EXPOSE 80
-EXPOSE 443
+EXPOSE 5000
 ENTRYPOINT ["dotnet", "rabbitcliproxy.dll"]

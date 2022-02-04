@@ -23,6 +23,7 @@ The port inside the container, where the HTTP-API is available, is `5000`.
   - [Full example](#full-example)
     - [Copy & Paste docker-compose.yaml](#copy--paste-docker-composeyaml)
   - [Define configuration in a `json` file](#define-configuration-in-a-json-file)
+  - [Kubernetes hosting](#kubernetes-hosting)
 - [Using the proxy](#using-the-proxy)
   - [Body](#body)
   - [Parameters](#parameters)
@@ -34,6 +35,7 @@ The port inside the container, where the HTTP-API is available, is `5000`.
     - [Example request](#example-request)
     - [Blacklist request headers](#blacklist-request-headers)
   - [Passthrough basic-auth](#passthrough-basic-auth)
+  - [Swagger and Swagger UI](#swagger-and-swagger-ui)
 
 # How to use this image
 ```sh
@@ -48,20 +50,20 @@ All required settings to connect to the proper rabbitmq-instance will be passed 
 
 Environment parameter|Default value
 ---|---
-RabbitMQ__Host|localhost
-RabbitMQ__Port|5672
-RabbitMQ__Username|guest
-RabbitMQ__Password|guest
-RabbitMQ__VirtualHost|/
+RabbitMQ:Host|localhost
+RabbitMQ:Port|5672
+RabbitMQ:Username|guest
+RabbitMQ:Password|guest
+RabbitMQ:VirtualHost|/
 
 ## Full example
 ```sh
 docker run -d --name rabbitmq-proxy -p 5000:5000 \
-    -e "RabbitMQ__Host|your.rabbitmq.instance" \
-    -e "RabbitMQ__Port|5672" \
-    -e "RabbitMQ__Username|rabbitmquser" \
-    -e "RabbitMQ__Password|superpassword" \
-    -e "RabbitMQ__VirtualHost|myvhost" \
+    -e "RabbitMQ:Host|your.rabbitmq.instance" \
+    -e "RabbitMQ:Port|5672" \
+    -e "RabbitMQ:Username|rabbitmquser" \
+    -e "RabbitMQ:Password|superpassword" \
+    -e "RabbitMQ:VirtualHost|myvhost" \
     flux1991/rabbitmq-http-proxy:latest
 ```
 
@@ -74,11 +76,11 @@ services:
     ports:
       - 5000:5000
     environment:
-      - RabbitMQ__Host=your.rabbitmq.instance
-      - RabbitMQ__Port=5672
-      - RabbitMQ__Username=rabbitmquser
-      - RabbitMQ__Password=superpassword
-      - RabbitMQ__VirtualHost=myvhost
+      - RabbitMQ:Host=your.rabbitmq.instance
+      - RabbitMQ:Port=5672
+      - RabbitMQ:Username=rabbitmquser
+      - RabbitMQ:Password=superpassword
+      - RabbitMQ:VirtualHost=myvhost
     restart: unless-stopped
 ```
 
@@ -119,6 +121,9 @@ services:
 The filename-part `docker` or `appsettings.<something>.json`, where `<something>` must equal the value, you provide for the environment-parameter `ASPNETCORE_ENVIRONMENT`.
 
 This configuration pattern is a built-in feature of Microsoft's `ASP.NET Core`.
+
+## Kubernetes hosting
+Since the configuration pattern with double-colon (e.g. `RabbitMQ:Host`) may fail, when you store the configuration in a `ConfigMap` resource in K8s, you can replace the double-colon with a double underscore, so the parameter name becomes `RabbitMQ__Host`.
 
 # Using the proxy
 Once your container is up and running, you can start publishing messages using `HTTP POST` requests to the host, where your container is available, using the mapped port (default: `5000`).
@@ -202,7 +207,7 @@ Simply configure it in your configuration json file:
 
 Or provide this configuration setting as environment-parameter when running container:
 ```sh
-docker run ... -e "RabbitMQ__HeaderBlacklist=OtherKey" ...
+docker run ... -e "RabbitMQ:HeaderBlacklist=OtherKey" ...
 ```
 
 There are some default headers configured, that are always ignored:

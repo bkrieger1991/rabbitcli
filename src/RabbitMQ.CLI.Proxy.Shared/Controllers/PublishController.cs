@@ -46,7 +46,7 @@ namespace RabbitMQ.CLI.Proxy.Shared.Controllers
             var payload = ms.ToArray();
 
             _logger.LogInformation($"Received Request at POST '/' - Body: {payload.Length} bytes, Headers: X-Queue={queue}; X-Exchange={exchange}; X-RoutingKey={routingKey}");
-
+            
             try
             {
                 var configuration = new Library.Configuration.RabbitMqConfiguration()
@@ -115,22 +115,25 @@ namespace RabbitMQ.CLI.Proxy.Shared.Controllers
 
                 return Accepted(new {Message = "Sucessful published message"});
             }
-            catch (Exception e) when (e.InnerException is BrokerUnreachableException)
-            {
-                return StatusCode(StatusCodes.Status503ServiceUnavailable, GetErrorResponse(e, "Broker unreachable"));
-            }
             catch (Exception e) when (e.InnerException is AuthenticationFailureException)
             {
+                _logger.LogWarning(e, "Authentication failure");
                 return Unauthorized(GetErrorResponse(e, "Authentication failure"));
+            }
+            catch (Exception e) when (e is BrokerUnreachableException)
+            {
+                _logger.LogError(e, "Connection failure");
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, GetErrorResponse(e, "Broker unreachable"));
             }
             catch (Exception e)
             {
-                var prefix = "Unhandled error";
+                var message = "Unhandled error";
                 if (e.InnerException != null)
                 {
-                    prefix += $" of type '{e.InnerException?.GetType().Name}'";
+                    message += $" of type '{e.InnerException?.GetType().Name}'";
                 }
-                return StatusCode(StatusCodes.Status500InternalServerError, GetErrorResponse(e, prefix));
+                _logger.LogCritical(e, message);
+                return StatusCode(StatusCodes.Status500InternalServerError, GetErrorResponse(e, message));
             }
         }
 
