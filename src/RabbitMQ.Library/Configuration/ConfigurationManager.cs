@@ -10,12 +10,10 @@ namespace RabbitMQ.Library.Configuration
     public class ConfigurationManager
     {
         private Configuration _config;
-        private readonly string _encryptionKey;
-
-        public ConfigurationManager()
+        
+        public static string GetEncryptionKey()
         {
-            //_encryptionKey = Environment.MachineName + Environment.UserName + "!#RabbitMqCli#!";
-            _encryptionKey = "!#RabbitMqCli#!";
+            return Environment.MachineName + Environment.UserName + "!#RabbitMqCli#!";
         }
 
         public void Initialize()
@@ -122,11 +120,16 @@ namespace RabbitMQ.Library.Configuration
 
         protected virtual void EnsureConfigFileExists()
         {
-            if (!File.Exists(GetConfigFilePath()))
+            if (File.Exists(GetConfigFilePath()))
             {
-                _config = new Configuration();
-                SaveConfiguration();
+                return;
             }
+
+            _config = new Configuration()
+            {
+                ConfigurationCollection = new Dictionary<string, RabbitMqConfiguration>()
+            };
+            SaveConfiguration();
         }
 
         private string GetConfigFilePath()
@@ -151,7 +154,7 @@ namespace RabbitMQ.Library.Configuration
                 .Select(kv =>
                     new KeyValuePair<string, string>(
                         kv.Key,
-                        JsonConvert.SerializeObject(kv.Value).Encrypt(_encryptionKey)
+                        JsonConvert.SerializeObject(kv.Value).Encrypt(GetEncryptionKey())
                     ))
                 .ToDictionary(kv => kv.Key, kv => kv.Value);
 
@@ -186,7 +189,7 @@ namespace RabbitMQ.Library.Configuration
             return encryptedCollection.Select(kv => 
                     new KeyValuePair<string, RabbitMqConfiguration>(
                         kv.Key,
-                        JsonConvert.DeserializeObject<RabbitMqConfiguration>(kv.Value.Decrypt(_encryptionKey))
+                        JsonConvert.DeserializeObject<RabbitMqConfiguration>(kv.Value.Decrypt(GetEncryptionKey()))
                     ))
                 .ToDictionary(kv => kv.Key, kv => kv.Value);
         }

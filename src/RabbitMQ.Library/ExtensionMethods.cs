@@ -1,7 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Unicode;
 using AutoMapper;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
@@ -51,6 +53,19 @@ namespace RabbitMQ.Library
             CheckTextAndThrow(text);
 
             var buffer = Encoding.UTF8.GetBytes(text);
+            
+            // If we are getting executed on windows, we have the possibility to encrypt data in
+            // user-scope without providing any kind of secret for encryption
+            if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return Convert.ToBase64String(ProtectedData.Protect(
+                    buffer,
+                    Encoding.UTF8.GetBytes(key),
+                    DataProtectionScope.CurrentUser
+                ));
+            }
+
+            // TODO: Find something for linux and mac to encrypt without using a predicatable secret
             using var aes = CreateAes(key);
 
             using var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
@@ -68,14 +83,24 @@ namespace RabbitMQ.Library
             CheckKeyAndThrow(key);
             CheckTextAndThrow(encryptedText);
 
-            var combined = Convert.FromBase64String(encryptedText);
-            var buffer = new byte[combined.Length];
+            var encrypted = Convert.FromBase64String(encryptedText);
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return Encoding.UTF8.GetString(ProtectedData.Unprotect(
+                    encrypted,
+                    Encoding.UTF8.GetBytes(key),
+                    DataProtectionScope.CurrentUser
+                ));
+            }
+
+            var buffer = new byte[encrypted.Length];
             using var aes = CreateAes(key);
 
             var iv = new byte[aes.IV.Length];
             var ciphertext = new byte[buffer.Length - iv.Length];
-            Array.ConstrainedCopy(combined, 0, iv, 0, iv.Length);
-            Array.ConstrainedCopy(combined, iv.Length, ciphertext, 0, ciphertext.Length);
+            Array.ConstrainedCopy(encrypted, 0, iv, 0, iv.Length);
+            Array.ConstrainedCopy(encrypted, iv.Length, ciphertext, 0, ciphertext.Length);
             aes.IV = iv;
 
             using var decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
