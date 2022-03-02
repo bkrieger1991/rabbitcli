@@ -9,7 +9,24 @@ namespace RabbitMQ.Library.Test
 {
     public class ConfigurationManagerTest
     {
-        private readonly string _exampleEncryptedConfig = "opzZeXICsX/4BzbUHrXnUhIkhhS6R2hZzqiGTpkeqQwKQ85xxVnUPeWQdoX826GVdfd83Ih6mW1fG4iRZteDl0eEkTOuk7oxjHGltQSSvAfmUdaOb52/4LkEghSSl5amfWePHkLxCUuiGR7uOxM2w+EL4L+1KJKogyEPzE8AkObnluw8n/UDK1ePOHVrix1u3DIr4KLIo8MSS3DSJoYpTE6Opx4h/gDLkPZ59TxfD2in//wCjoepNsuY1pepoucOPDpBU7fTfXfvstkWijDO+w==";
+        private readonly string _exampleEncryptedConfig;
+
+        public ConfigurationManagerTest()
+        {
+            var config = new RabbitMqConfiguration()
+            {
+                AmqpAddress = "localhost",
+                AmqpPort = 5672,
+                Name = "default",
+                Password = "guest",
+                Ssl = false,
+                Username = "guest",
+                VirtualHost = "/",
+                WebInterfaceAddress = "localhost",
+                WebInterfacePort = 15672
+            };
+            _exampleEncryptedConfig = JsonConvert.SerializeObject(config).Encrypt(ConfigurationManager.GetEncryptionKey());
+        }
 
         [Fact]
         public void Should_Load_Configuration_Old_Format_Without_Error()
