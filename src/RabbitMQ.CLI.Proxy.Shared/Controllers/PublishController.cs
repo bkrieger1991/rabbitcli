@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client.Exceptions;
 using RabbitMQ.Library;
+using RabbitMQ.Library.Configuration;
 
 namespace RabbitMQ.CLI.Proxy.Shared.Controllers
 {
@@ -22,11 +23,11 @@ namespace RabbitMQ.CLI.Proxy.Shared.Controllers
         private const string VirtualHostHeaderKey = "X-VirtualHost";
         private const string AuthorizationHeaderKey = "Authorization";
 
-        private readonly RabbitMqConfiguration _rabbitMqConfig;
+        private readonly ProxyConfiguration _rabbitMqConfig;
         private readonly RabbitMqClient _client;
         private readonly ILogger<PublishController> _logger;
 
-        public PublishController(RabbitMqConfiguration rabbitMqConfig, RabbitMqClient client, ILogger<PublishController> logger)
+        public PublishController(ProxyConfiguration rabbitMqConfig, RabbitMqClient client, ILogger<PublishController> logger)
         {
             _rabbitMqConfig = rabbitMqConfig;
             _client = client;
@@ -50,69 +51,21 @@ namespace RabbitMQ.CLI.Proxy.Shared.Controllers
             
             try
             {
-                var configuration = new Library.Configuration.RabbitMqConfiguration()
-                {
-                    WebInterfaceAddress = "localhost",
-                    WebInterfacePort = 80,
-                    AmqpAddress = _rabbitMqConfig.Host,
-                    AmqpPort = _rabbitMqConfig.Port,
-                    Username = _rabbitMqConfig.Username,
-                    Password = _rabbitMqConfig.Password,
-                    VirtualHost = _rabbitMqConfig.VirtualHost
-                };
-
+                // Perform validations
+                ValidateExchangeAndQueue(exchange, queue);
+                
+                var configuration = CreateConfiguration();
                 // Check if we should overwrite configured authorization information with request-header
-                if (!string.IsNullOrEmpty(authorization))
-                {
-                    (var username, var password) = GetAuthorization(authorization);
-
-                    configuration.Username = username;
-                    configuration.Password = password;
-                }
-
+                ApplyPassedAuthorizationIfGiven(authorization, configuration);
                 // Check if we should overwrite configured default virtual-host with a given one
-                if (!string.IsNullOrEmpty(virtualHost))
-                {
-                    configuration.VirtualHost = virtualHost;
-                }
-
+                ApplyVirtualHostIfGiven(virtualHost, configuration);
+                // Set configuration to client instance
                 _client.SetConfig(configuration);
 
-                ValidateExchangeAndQueue(exchange, queue);
-                var headerBlacklist = GetHeaderBlacklist();
-                headerBlacklist.AddRange(
-                    new[] {RoutingKeyHeaderKey, ExchangeHeaderKey, QueueHeaderKey}
-                );
-                var parameters = GetParameters(HttpContext.Request.Headers, headerBlacklist);
-
-                if (parameters.Count > 0)
-                {
-                    _logger.LogDebug(
-                        $"Found {parameters.Count} headers for usage in parameters and message headers"
-                    );
-                    parameters.ToList().ForEach(p => _logger.LogTrace($"{p.Key}={p.Value}"));
-                }
-                else
-                {
-                    _logger.LogDebug(
-                        "No further headers provided for use as parameters or message-headers"
-                    );
-                }
-
-                if (string.IsNullOrWhiteSpace(queue))
-                {
-                    _logger.LogInformation(
-                        $"Publishing given payload to exchange {exchange} with routing-key '{routingKey}'"
-                    );
-                    _client.PublishMessageToExchange(exchange, routingKey, payload, parameters);
-                }
-                else
-                {
-                    _logger.LogInformation(
-                        $"Publishing given payload to queue '{queue}' with routing-key '{routingKey}'"
-                    );
-                    _client.PublishMessageToQueue(queue, routingKey, payload, parameters);
-                }
+                
+                var parameters = GetParameters(HttpContext.Request.Headers);
+                LogParameters(parameters);
+                PublishToQueueOrExchange(queue, exchange, routingKey, payload, parameters);
 
                 return Accepted(new {Message = "Successful published message"});
             }
@@ -138,6 +91,84 @@ namespace RabbitMQ.CLI.Proxy.Shared.Controllers
             }
         }
 
+        private void PublishToQueueOrExchange(
+            string queue,
+            string exchange,
+            string routingKey,
+            byte[] payload,
+            IDictionary<string, string> parameters
+        )
+        {
+            if (string.IsNullOrWhiteSpace(queue))
+            {
+                _logger.LogInformation(
+                    $"Publishing given payload to exchange {exchange} with routing-key '{routingKey}'"
+                );
+                _client.PublishMessageToExchange(exchange, routingKey, payload, parameters);
+            }
+            else
+            {
+                _logger.LogInformation(
+                    $"Publishing given payload to queue '{queue}' with routing-key '{routingKey}'"
+                );
+                _client.PublishMessageToQueue(queue, routingKey, payload, parameters);
+            }
+        }
+
+        private RabbitMqConfiguration CreateConfiguration()
+        {
+            var configuration = new RabbitMqConfiguration()
+            {
+                WebInterfaceAddress = "localhost",
+                WebInterfacePort = 80,
+                AmqpAddress = _rabbitMqConfig.Host,
+                AmqpPort = _rabbitMqConfig.Port,
+                Username = _rabbitMqConfig.Username,
+                Password = _rabbitMqConfig.Password,
+                VirtualHost = _rabbitMqConfig.VirtualHost
+            };
+            return configuration;
+        }
+
+        private static void ApplyVirtualHostIfGiven(string virtualHost, RabbitMqConfiguration configuration)
+        {
+            if (!string.IsNullOrEmpty(virtualHost))
+            {
+                configuration.VirtualHost = virtualHost;
+            }
+        }
+
+        private void ApplyPassedAuthorizationIfGiven(
+            string authorization,
+            RabbitMqConfiguration configuration
+        )
+        {
+            if (!string.IsNullOrEmpty(authorization))
+            {
+                (var username, var password) = GetAuthorization(authorization);
+
+                configuration.Username = username;
+                configuration.Password = password;
+            }
+        }
+
+        private void LogParameters(IDictionary<string, string> parameters)
+        {
+            if (parameters.Count > 0)
+            {
+                _logger.LogDebug(
+                    $"Found {parameters.Count} headers for usage in parameters and message headers"
+                );
+                parameters.ToList().ForEach(p => _logger.LogTrace($"{p.Key}={p.Value}"));
+            }
+            else
+            {
+                _logger.LogDebug(
+                    "No further headers provided for use as parameters or message-headers"
+                );
+            }
+        }
+
         private object GetErrorResponse(Exception e, string messagePrefix)
         {
             return new
@@ -151,19 +182,33 @@ namespace RabbitMQ.CLI.Proxy.Shared.Controllers
 
         private List<string> GetHeaderBlacklist()
         {
-            var blacklist = _rabbitMqConfig.DefaultHeaderBlacklist.Trim(',', ' ')
-                + "," + _rabbitMqConfig.HeaderBlacklist.Trim(',', ' ');
-            return blacklist
+            var defaultHeaderBlacklist = _rabbitMqConfig.DefaultHeaderBlacklist?.Trim(',', ' ') ?? "";
+            var additionalHeaderBlacklist = _rabbitMqConfig.HeaderBlacklist?.Trim(',', ' ') ?? "";
+
+            return defaultHeaderBlacklist
                 .Split(",")
+                .Where(h => h != "")
+                // Concat configurable custom blacklist headers
+                .Concat(
+                    additionalHeaderBlacklist
+                        .Split(",")
+                        .Where(h => h != "")
+                )
+                // Concat reserved header-names for routing-key, exchange and queue
+                .Concat(
+                    new[] { RoutingKeyHeaderKey, ExchangeHeaderKey, QueueHeaderKey }
+                )
+                .Distinct()
                 .Select(h => h.Trim())
                 .ToList();
         }
 
         private IDictionary<string, string> GetParameters(
-            IHeaderDictionary headers,
-            IReadOnlyCollection<string> blacklist
+            IHeaderDictionary headers
         )
         {
+            var blacklist = GetHeaderBlacklist();
+
             return headers
                 .ToArray()
                 .Where(kv => !blacklist.Contains(kv.Key, StringComparer.InvariantCultureIgnoreCase))
