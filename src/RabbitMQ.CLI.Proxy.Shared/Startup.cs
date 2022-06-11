@@ -19,7 +19,7 @@ namespace RabbitMQ.CLI.Proxy.Shared
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var config = _configuration.GetSection("RabbitMQ").Get<RabbitMqConfiguration>();
+            var config = _configuration.GetSection("RabbitMQ").Get<ProxyConfiguration>();
             services.AddSingleton(config);
             services.AddTransient<RabbitMqClient>();
             services.AddAutoMapper(c => c.AddMaps(typeof(RabbitMqClient).Assembly));
