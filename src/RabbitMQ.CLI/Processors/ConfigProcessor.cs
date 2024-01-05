@@ -1,114 +1,136 @@
-﻿using System;
+﻿using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ConsoleTables;
 using Newtonsoft.Json;
 using RabbitMQ.CLI.CommandLineOptions;
+using RabbitMQ.Library;
 using RabbitMQ.Library.Configuration;
 using Console = Colorful.Console;
 
-namespace RabbitMQ.CLI.Processors
+namespace RabbitMQ.CLI.Processors;
+
+public class ConfigProcessor
 {
-    public class ConfigProcessor
+    private readonly ConfigurationManager _configManager;
+
+    public ConfigProcessor(ConfigurationManager configManager)
     {
-        private readonly ConfigurationManager _configManager;
+        _configManager = configManager;
+    }
 
-        public ConfigProcessor(ConfigurationManager configManager)
+    public Task HandleConfigCommand(ConfigOptions options)
+    {
+        // Normalize empty config name
+        if (options.ConfigName.IsEmpty())
         {
-            _configManager = configManager;
+            options.ConfigName = null;
         }
 
-        public Task<int> AddConfig(AddConfigOptions options)
+        var action = options.Action.ToEnum<ConfigOptions.Actions>();
+
+        switch (action)
         {
-            // Normalize empty config name
-            if (string.IsNullOrWhiteSpace(options.ConfigName))
-            {
-                options.ConfigName = null;
-            }
+            case ConfigOptions.Actions.Add:
+                AddConfig(options.Parse());
+                break;
+            case ConfigOptions.Actions.Edit:
+                EditConfig(options.Parse());
+                break;
+            case ConfigOptions.Actions.Delete:
+                DeleteConfig(options.ConfigName);
+                break;
+            case ConfigOptions.Actions.Get:
+                GetConfigs(options.ConfigName);
+                break;
+            case ConfigOptions.Actions.Use:
+                SetAsDefault(options.ConfigName);
+                break;
+        }
 
-            // Normalize empty web host
-            if (string.IsNullOrWhiteSpace(options.WebHostname))
-            {
-                options.WebHostname = null;
-            }
+        return Task.CompletedTask;
+    }
 
-            var config = RabbitMqConfiguration.Create(
-                options.Username, options.Password,
-                options.VirtualHost, options.Hostname,
-                options.AmqpPort, options.WebHostname ?? options.Hostname,
-                options.WebPort, options.Ssl, options.ConfigName
-            );
+    private void AddConfig(RabbitMqConfiguration config)
+    {
+        _configManager.AddConfiguration(config);
+        Console.WriteLine();
+        Console.WriteLineFormatted("Configuration stored. Name: {0}", config.Name, ConsoleColors.HighlightColor, ConsoleColors.DefaultColor);
 
-            _configManager.AddConfiguration(config);
+    }
+    private void DeleteConfig(string configName)
+    {
+        _configManager.RemoveConfiguration(configName);
+        Console.WriteLine();
+        Console.WriteLineFormatted("Configuration with name {0} deleted.", configName, ConsoleColors.HighlightColor, ConsoleColors.DefaultColor);
+    }
 
+    private void EditConfig(RabbitMqConfiguration config)
+    {
+        _configManager.UpdateConfiguration(config);
+        Console.WriteLine();
+        Console.WriteLine("Values of configuration updated:", ConsoleColors.DefaultColor);
+        Console.WriteLine(JsonConvert.SerializeObject(config, Formatting.Indented), ConsoleColors.JsonColor);
+    }
+
+    private void SetAsDefault(string configName)
+    {
+        _configManager.SetProperty(nameof(Configuration.DefaultConfiguration), configName);
+        Console.WriteLine();
+        Console.WriteLine("Configured new default: {0}", configName, ConsoleColors.HighlightColor, ConsoleColors.DefaultColor);
+    }
+
+    private void GetConfigs(string configName = null)
+    {
+        if (!string.IsNullOrWhiteSpace(configName))
+        {
+            var config = _configManager.Get(configName);
+            Console.WriteLine(JsonConvert.SerializeObject(config, Formatting.Indented), ConsoleColors.JsonColor);
             Console.WriteLine();
-            Console.Write("Configuration stored. Name: ", ConsoleColors.DefaultColor);
-            Console.WriteLine(config.Name, ConsoleColors.HighlightColor);
-            return Task.FromResult(0);
+            Console.WriteLine("CLI-Parameters for edit:");
+            Console.WriteLine(
+                "rabbitcli config edit " +
+                $"--name {config.Name} " +
+                $"--amqp {config.Amqp.ToUri()} " +
+                $"--web {config.Web.ToUri()}" +
+                $"{(config.Amqp.Unsecure ? " --ignore-invalid-cert" : "")}" +
+                $"{(!config.Amqp.TlsVersion.IsEmpty() ? $"--amqps-tls-version {config.Amqp.TlsVersion}" : "")}" +
+                $"{(!config.Amqp.TlsServerName.IsEmpty() ? $"--amqps-tls-server {config.Amqp.TlsServerName}" : "")}", ConsoleColors.HighlightColor);
+            return;
         }
 
-        public Task<int> UpdateConfig(UpdateConfigOptions options)
+        var configKeys = _configManager.GetConfigurationKeys();
+        if (configKeys.Length == 0)
         {
-            if (options.Delete)
-            {
-                _configManager.RemoveConfiguration(options.ConfigName);
-                return Task.FromResult(0);
-            }
-
-            var config = _configManager.Get(options.ConfigName);
-            config.Password = options.Password ?? config.Password;
-            config.Username = options.Username ?? config.Username;
-            config.VirtualHost = options.VirtualHost ?? config.VirtualHost;
-            config.AmqpAddress = options.AmqpHostname ?? config.AmqpAddress;
-            config.AmqpPort = options.AmqpPort > 0 ? options.AmqpPort : config.AmqpPort;
-            config.WebInterfaceAddress = options.WebHostname ?? config.WebInterfaceAddress;
-            config.WebInterfacePort = options.WebPort > 0 ? options.WebPort : config.WebInterfacePort;
-            config.Ssl = options.Ssl ?? config.Ssl;
-            
-            _configManager.UpdateConfiguration(config);
-            return Task.FromResult(0);
+            Console.WriteLine("There are no configurations yet");
         }
+        configKeys.ToList().ForEach(Console.WriteLine);
+    }
 
-        public Task<int> GetConfigs(GetConfigOptions options)
+    public Task HandlePropertyCommand(PropertyOptions options)
+    {
+        var action = options.Action.ToEnum<PropertyOptions.Actions>();
+        switch (action)
         {
-            if (!string.IsNullOrWhiteSpace(options.ConfigName))
-            {
-                var config = _configManager.Get(options.ConfigName);
-                Console.WriteLine(JsonConvert.SerializeObject(config, Formatting.Indented), ConsoleColors.JsonColor);
-                return Task.FromResult(0);
-            }
-
-            var configKeys = _configManager.GetConfigurationKeys();
-            configKeys.ToList().ForEach(Console.WriteLine);
-            return Task.FromResult(0);
+            case PropertyOptions.Actions.Get:
+                WritePropertyTable();
+                break;
+            case PropertyOptions.Actions.Set:
+                _configManager.SetProperty(options.Name, options.Value);
+                break;
         }
+        return Task.CompletedTask;
+    }
 
-        public Task<int> ConfigureProperty(ConfigurePropertyOptions options)
-        {
-            if (options.GetProperties)
-            {
-                var props = typeof(Configuration).GetProperties()
-                    .Where(p => p.Name != nameof(Configuration.ConfigurationCollection))
-                    .ToList();
+    private void WritePropertyTable()
+    {
+        var props = typeof(Configuration).GetProperties()
+            .Where(p => p.Name != nameof(Configuration.ConfigurationCollection))
+            .ToList();
 
-                var table = new ConsoleTable("Property", "Current value");
-                props.ForEach(p => table.AddRow(p.Name, _configManager.GetProperty(p.Name)));
+        var table = new ConsoleTable("Property", "Current value");
+        props.ForEach(p => table.AddRow(p.Name, _configManager.GetProperty(p.Name)));
 
-                table.Write();
-                return Task.FromResult(0);
-            }
-
-            if (!string.IsNullOrWhiteSpace(options.SetProperty))
-            {
-                if (string.IsNullOrWhiteSpace(options.Value))
-                {
-                    throw new Exception("You have to provide a value in order to set a configuration property");
-                }
-
-                _configManager.SetProperty(options.SetProperty, options.Value);
-            }
-
-            return Task.FromResult(0);
-        }
+        table.Write();
     }
 }

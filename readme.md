@@ -9,32 +9,14 @@ This CLI tool helps fetching messages with extended filter functionality, editin
 
 It allows you to configure more than one instance, to e.g. perform actions on your local development instance as well on your staging or productive environment.
 
-It's written in C# .NET 5.0 and available for download in the branch `releases`.
+It's written in C# .NET 6.0 and available for download in the branch `releases`.
 
 - [What is RabbitCLI?](#what-is-rabbitcli)
 - [RabbitMQ HTTP-Proxy Docker-Image](#rabbitmq-http-proxy-docker-image)
 - [Download latest CLI-Tool release](#download-latest-cli-tool-release)
     - [See release branch for all available releases](#see-release-branch-for-all-available-releases)
   - [Installation](#installation)
-- [Commands](#commands)
-  - [Configuration](#configuration)
-    - [Command: `add-config`](#command-add-config)
-    - [Configuration Storage](#configuration-storage)
-    - [Command: `get-configs`](#command-get-configs)
-    - [Command: `update-config`](#command-update-config)
-    - [Command: `config-property`](#command-config-property)
-  - [Queues](#queues)
-    - [Command: `get-queues`](#command-get-queues)
-  - [Messages](#messages)
-    - [Command: `get-messages`](#command-get-messages)
-    - [Filter possibilites](#filter-possibilites)
-    - [Live-Streaming messages](#live-streaming-messages)
-    - [Command: `move-messages`](#command-move-messages)
-    - [Command: `purge-messages`](#command-purge-messages)
-    - [Command: `edit-message`](#command-edit-message)
-  - [HTTP-Proxy: Command `proxy`](#http-proxy-command-proxy)
-    - [Publishing messages](#publishing-messages)
-      - [Message Headers](#message-headers)
+- [Command structure](#commands)
 - [Contribution & Development](#contribution--development)
   - [Pull request into `master`](#pull-request-into-master)
   - [Create a release](#create-a-release)
@@ -51,6 +33,21 @@ There is a docker-image in the official docker-hub, that enables you to integrat
 Just unzip the downloaded archive and either invoke a command (described below) on the `rabbitcli.exe` directly or run the `install.ps1` script to copy the RabbitMQ CLI into `C:\Users\<YourName>\AppData\Local\RabbitCLI\rabbitcli.exe` and adding this path to your user's `PATH` environment variable.
 
 # Commands
+General Usage: **`rabbitcli <resource> <action> <options>`**<br>
+## Structure of resources/actions
+|**rabbitcli**|`<resource>`|`<action>`|`<options>`|
+|--|--|--|--|
+||`config`|`add`|`--amqp` *(required)*, `--web` *(required)*, `--name`, `--ignore-invalid-cert`, `--amqps-tls-version`, `--amqps-tls-server`
+|||`get`|`--name`
+|||`delete`|`--name` *(required)*
+|||`edit`|`--name` *(required)*, `--amqp`, `--web`, `--ignore-invalid-cert`, `--amqps-tls-version`, `--amqps-tls-server`
+|||`use`|`--name` *(required)*
+||`property`|`get`||
+|||`set`|`--name` *(required)*, `--value` *(required)*
+||`queue`|`get`|`--queue`, `--qid`, `--sort`, `--desc`, `--limit`, `--filter`, `--exclude`
+||`message`|`get`|`--qid` *(required)*, `--queue` *(required)*, `--hash`, `--dump`, `--dump-metadata`, `--body`, `--headers`, `--json`, `--live-view`
+|||`purge`|`--qid` *(required)*, `--queue` *(required)*, `--hash`, `--filter`
+|||`move`|`--from-id` *(required)*, `--from` *(required)*, `--to-id` *(required)*, `--to` *(required)*, 
 ## Configuration
 For management of different configurations, you can add, change and delete configurations.
 A configuration contains all information to establish a connection to a RabbitMQ host.

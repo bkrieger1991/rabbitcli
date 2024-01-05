@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -11,104 +12,140 @@ using RabbitMQ.Library.Configuration;
 using RabbitMQ.Library.Helper;
 using Console = Colorful.Console;
 
-namespace RabbitMQ.CLI.Processors
+namespace RabbitMQ.CLI.Processors;
+
+public class QueueProcessor
 {
-    public class QueueProcessor
+    private readonly ConfigurationManager _configManager;
+    private readonly RabbitMqClient _rmqClient;
+
+    public QueueProcessor(ConfigurationManager configManager, RabbitMqClient rmqClient)
     {
-        private readonly ConfigurationManager _configManager;
-        private readonly RabbitMqClient _rmqClient;
+        _configManager = configManager;
+        _rmqClient = rmqClient;
+    }
+    
+    public async Task HandleQueueCommand(QueueOptions options)
+    {
+        var config = _configManager.Get(options.ConfigName);
+        _rmqClient.SetConfig(config);
 
-        public QueueProcessor(ConfigurationManager configManager, RabbitMqClient rmqClient)
+        var action = options.Action.ToEnum<QueueOptions.Actions>();
+        switch (action)
         {
-            _configManager = configManager;
-            _rmqClient = rmqClient;
+            case QueueOptions.Actions.Get:
+                await GetQueues(options);
+                break;
         }
+    }
+
+    private async Task GetQueues(QueueOptions options)
+    {
+        if (!string.IsNullOrWhiteSpace(options.QueueId))
+        {
+            await OutputSingleQueue(null, options.QueueId);
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(options.QueueName))
+        {
+            await OutputSingleQueue(options.QueueName);
+            return;
+        }
+
+        await OutputQueueList(options);
+    }
+
+    private async Task OutputSingleQueue(string queueName = null, string queueHash = null)
+    {
+        var (queue, bindings) = queueName == null 
+            ? await _rmqClient.GetQueueByHash(queueHash)
+            : await _rmqClient.GetQueue(queueName);
+
+        Console.WriteLine(JsonConvert.SerializeObject(new
+        {
+            queue.Name,
+            Id = _rmqClient.HashQueueName(queue.Name),
+            queue.Consumers,
+            queue.Messages,
+            queue.MessagesReady,
+            queue.MessagesUnacknowledged,
+            queue.AutoDelete,
+            queue.Durable,
+            queue.Node,
+            queue.Policy,
+            queue.Vhost,
+            queue.Memory
+        }, Formatting.Indented), ConsoleColors.JsonColor);
+
+        var bindingTable = new ConsoleTable("From", "RoutingKey") { Options = { EnableCount = false } };
+        bindings.ToList().ForEach(b => bindingTable.AddRow(b.Source, b.RoutingKey));
+        Console.WriteLine("Bindings:", ConsoleColors.HighlightColor);
+        bindingTable.Write();
+    }
+
+    private async Task OutputQueueList(QueueOptions options)
+    {
+        var queues = await _rmqClient.GetQueues();
+        var querySummary = new List<string>()
+        {
+            $"Fetched {queues.Length} queues in total."
+        };
         
-        public async Task<int> GetQueues(GetQueuesOptions options)
+        if (!options.Filter.IsEmpty())
         {
-            var config = _configManager.Get(options.ConfigName);
-            _rmqClient.SetConfig(config);
+            queues = queues
+                .Where(q => q.Name.Contains(options.Filter, StringComparison.InvariantCultureIgnoreCase))
+                .ToArray();
 
-            if (!string.IsNullOrWhiteSpace(options.QueueId))
-            {
-                await OutputSingleQueue(null, options.QueueId);
-                return 0;
-            }
-
-            if (!string.IsNullOrWhiteSpace(options.QueueName))
-            {
-                await OutputSingleQueue(options.QueueName);
-                return 0;
-            }
-
-            await OutputQueueList(options);
-            return 0;
+            querySummary.Add($"Filtered {queues.Length} queues with \"{options.Filter}\".");
         }
 
-        private async Task OutputSingleQueue(string queueName = null, string queueHash = null)
+        if (options.Exclude.Any())
         {
-            var (queue, bindings) = queueName == null 
-                ? await _rmqClient.GetQueueByHash(queueHash)
-                : await _rmqClient.GetQueue(queueName);
+            queues = queues
+                .Where(q => q.Name.ContainsNoneOf(options.Exclude))
+                .ToArray();
 
-            Console.WriteLine(JsonConvert.SerializeObject(new
-            {
-                queue.Name,
-                Id = _rmqClient.HashQueueName(queue.Name),
-                queue.Consumers,
-                queue.Messages,
-                queue.MessagesReady,
-                queue.MessagesUnacknowledged,
-                queue.AutoDelete,
-                queue.Durable,
-                queue.Node,
-                queue.Policy,
-                queue.Vhost,
-                queue.Memory
-            }, Formatting.Indented), ConsoleColors.JsonColor);
-
-            var bindingTable = new ConsoleTable("From", "RoutingKey") { Options = { EnableCount = false } };
-            bindings.ToList().ForEach(b => bindingTable.AddRow(b.Source, b.RoutingKey));
-            Console.WriteLine("Bindings:", ConsoleColors.HighlightColor);
-            bindingTable.Write();
+            querySummary.Add($"Excluding ({string.Join(", ", options.Exclude.ToArray())}): {queues.Length} queues left.");
         }
 
-        private async Task OutputQueueList(GetQueuesOptions options)
+        if (!string.IsNullOrWhiteSpace(options.Sort))
         {
-            var queues = await _rmqClient.GetQueues();
-
-            if (!string.IsNullOrWhiteSpace(options.Filter))
+            var queueType = typeof(Queue);
+            var property = queueType.GetProperty(options.Sort, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+            if (property is null)
             {
-                queues = queues
-                    .Where(q => q.Name.Contains(options.Filter, StringComparison.InvariantCultureIgnoreCase))
-                    .ToArray();
+                throw new ArgumentException($"A queue does not contain a property with name \"{options.Sort}\"");
             }
 
-            if (!string.IsNullOrWhiteSpace(options.Sort))
-            {
-                var queueType = typeof(Queue);
-                var property = queueType.GetProperty(options.Sort, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-                if (property is null)
-                {
-                    throw new Exception($"A queue does not contain a property with name \"{options.Sort}\"");
-                }
-
-                // Sort queue list
-                queues = (
-                    options.Descending 
+            // Sort queue list
+            queues = (
+                options.Descending 
                     ? queues.ToList().OrderByDescending(l => property.GetValue(l))
                     : queues.ToList().OrderBy(l => property.GetValue(l))
-                ).ToArray();
-            }
+            ).ToArray();
 
-            if (options.Limit > 0)
-            {
-                queues = queues.Take(options.Limit).ToArray();
-            }
-
-            var table = new ConsoleTable("id", "name", "consumers", "messages") { Options = { EnableCount = false } };
-            queues.ToList().ForEach(q => table.AddRow(Hash.GetShortHash(q.Name), q.Name, q.Consumers, q.Messages));
-            table.Write();
+            querySummary.Add($"Sorting result by values in {property.Name}, {(options.Descending ? "descending" : "ascending")}.");
         }
+
+        if (options.Limit > 0)
+        {
+            querySummary.Add($"Limiting result of {queues.Length} by {options.Limit}.");
+            queues = queues.Take(options.Limit).ToArray();
+        }
+
+        if (options.ShowQueryInfo)
+        {
+            Console.WriteLine("Query summary:", ConsoleColors.HighlightColor);
+            querySummary.ForEach(i => Console.WriteLine($"  - {i}", ConsoleColors.JsonColor));
+            Console.WriteLine("");
+            Console.WriteLine("Here is your query result:", ConsoleColors.DefaultColor);
+            Console.WriteLine("");
+        }
+
+        var table = new ConsoleTable("id", "name", "consumers", "messages") { Options = { EnableCount = false } };
+        queues.ToList().ForEach(q => table.AddRow(Hash.GetShortHash(q.Name), q.Name, q.Consumers, q.Messages));
+        table.Write();
     }
 }

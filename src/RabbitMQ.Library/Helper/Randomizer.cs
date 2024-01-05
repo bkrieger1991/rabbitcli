@@ -1,12 +1,11 @@
 ﻿using System;
 
-namespace RabbitMQ.Library.Helper
+namespace RabbitMQ.Library.Helper;
+
+public static class Randomizer
 {
-    public static class Randomizer
+    public static string GenerateWithGuid(string prefix = "")
     {
-        public static string GenerateWithGuid(string prefix = "")
-        {
-            return prefix + Guid.NewGuid().ToString("N");
-        }
+        return prefix + Guid.NewGuid().ToString("N");
     }
 }

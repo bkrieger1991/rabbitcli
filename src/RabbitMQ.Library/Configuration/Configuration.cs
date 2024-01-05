@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 
-namespace RabbitMQ.Library.Configuration
+namespace RabbitMQ.Library.Configuration;
+
+public class Configuration
 {
-    public class Configuration
-    {
-        public string TextEditorPath { get; set; } = "notepad";
-        public Dictionary<string, RabbitMqConfiguration> ConfigurationCollection { get; set; }
-    }
+    public string TextEditorPath { get; set; } = "notepad";
+    public string DefaultConfiguration { get; set; } = "default";
+    public Dictionary<string, RabbitMqConfiguration> ConfigurationCollection { get; set; }
 }

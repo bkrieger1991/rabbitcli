@@ -15,16 +15,26 @@ namespace RabbitMQ.Library.Test
         {
             var config = new RabbitMqConfiguration()
             {
-                AmqpAddress = "localhost",
-                AmqpPort = 5672,
-                Name = "default",
-                Password = "guest",
-                Ssl = false,
-                Username = "guest",
-                VirtualHost = "/",
-                WebInterfaceAddress = "localhost",
-                WebInterfacePort = 15672
+                Amqp =
+                {
+                    Hostname = "localhost",
+                    Port = 5672,
+                    Password = "guest",
+                    Username = "guest",
+                    VirtualHost = "/",
+                    IsAmqps = false
+                },
+                Web =
+                {
+                    Hostname = "localhost",
+                    Port = 15672,
+                    Password = "guest",
+                    Username = "guest",
+                    Ssl = false
+                },
+                Name = "default"
             };
+
             _exampleEncryptedConfig = JsonConvert.SerializeObject(config).Encrypt(ConfigurationManager.GetEncryptionKey());
         }
 

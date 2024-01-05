@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -10,7 +10,7 @@
 
     <AssemblyName>rabbitcli</AssemblyName>
 
-    <Version>1.5.3</Version>
+    <Version>2.0.0</Version>
     <ApplicationIcon>rabbitcli.ico</ApplicationIcon>
     <Authors>Benjamin Krieger</Authors>
     <Copyright>Benjamin Krieger</Copyright>
@@ -23,14 +23,15 @@
 
   <ItemGroup>
     <PackageReference Include="Colorful.Console" Version="1.2.15" />
-    <PackageReference Include="CommandLineParser" Version="2.8.0" />
-    <PackageReference Include="ConsoleTables" Version="2.4.2" />
-    <PackageReference Include="JetBrains.Annotations" Version="2021.3.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
+    <PackageReference Include="CommandLineParser" Version="2.9.1" />
+    <PackageReference Include="ConsoleTables" Version="2.6.1" />
+    <PackageReference Include="FluentValidation" Version="11.8.1" />
+    <PackageReference Include="JetBrains.Annotations" Version="2023.3.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
     <PackageReference Include="MimeSharp" Version="1.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.1" />
     
     <!-- Strange... -->
     <PackageReference Include="System.Runtime.Extensions" Version="4.3.0" />
