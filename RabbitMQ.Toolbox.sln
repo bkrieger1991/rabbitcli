@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31205.134
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34408.163
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RabbitMQ.CLI", "src\RabbitMQ.CLI\RabbitMQ.CLI.csproj", "{AF86125F-3DBC-469E-9542-95FBDDC95EF4}"
 EndProject
@@ -22,7 +22,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RabbitMQ.CLI.Proxy", "src\RabbitMQ.CLI.Proxy\RabbitMQ.CLI.Proxy.csproj", "{E33BA4D2-B48F-4C36-A68F-6AE1D0FF57A5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RabbitMQ.CLI.Proxy.Shared", "src\RabbitMQ.CLI.Proxy.Shared\RabbitMQ.CLI.Proxy.Shared.csproj", "{7A407C3E-0C3B-465C-A985-687A3C9220D7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RabbitMQ.CLI.Proxy.Shared", "src\RabbitMQ.CLI.Proxy.Shared\RabbitMQ.CLI.Proxy.Shared.csproj", "{7A407C3E-0C3B-465C-A985-687A3C9220D7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

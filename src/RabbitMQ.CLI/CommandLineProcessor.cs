@@ -1,71 +1,75 @@
 ﻿using System;
-using System.Drawing;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using CommandLine;
+using FluentValidation;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.CLI.CommandLineOptions;
 using RabbitMQ.CLI.Processors;
 using Console = Colorful.Console;
 
-namespace RabbitMQ.CLI
+namespace RabbitMQ.CLI;
+
+public class CommandLineProcessor
 {
-    public class CommandLineProcessor
+    private readonly QueueProcessor _queueProcessor;
+    private readonly ConfigProcessor _configProcessor;
+    private readonly MessageProcessor _messageProcessor;
+    private readonly ProxyProcessor _proxyProcessor;
+    private readonly ILogger<CommandLineProcessor> _logger;
+
+    public CommandLineProcessor(
+        QueueProcessor queueProcessor, 
+        ConfigProcessor configProcessor, 
+        MessageProcessor messageProcessor,
+        ProxyProcessor proxyProcessor,
+        ILogger<CommandLineProcessor> logger
+    )
     {
-        private readonly QueueProcessor _queueProcessor;
-        private readonly ConfigProcessor _configProcessor;
-        private readonly MessageProcessor _messageProcessor;
-        private readonly ProxyProcessor _proxyProcessor;
+        _queueProcessor = queueProcessor;
+        _configProcessor = configProcessor;
+        _messageProcessor = messageProcessor;
+        _proxyProcessor = proxyProcessor;
+        _logger = logger;
+    }
 
-        public CommandLineProcessor(
-            QueueProcessor queueProcessor, 
-            ConfigProcessor configProcessor, 
-            MessageProcessor messageProcessor,
-            ProxyProcessor proxyProcessor
-        )
+    public async Task Execute(string[] args)
+    {
+        // Map CLI-Options (verbs) to corresponding action
+        var commandMap = new Dictionary<Type, IOptionExecutorWrapper>()
         {
-            _queueProcessor = queueProcessor;
-            _configProcessor = configProcessor;
-            _messageProcessor = messageProcessor;
-            _proxyProcessor = proxyProcessor;
+            { typeof(ConfigOptions), new OptionExecutorWrapper<ConfigOptions>(o => _configProcessor.HandleConfigCommand(o)) },
+            { typeof(PropertyOptions), new OptionExecutorWrapper<PropertyOptions>(o => _configProcessor.HandlePropertyCommand(o)) },
+            { typeof(QueueOptions), new OptionExecutorWrapper<QueueOptions>(o => _queueProcessor.HandleQueueCommand(o)) },
+            { typeof(MessageOptions), new OptionExecutorWrapper<MessageOptions>(o => _messageProcessor.HandleMessageCommand(o)) },
+            { typeof(ProxyOptions), new OptionExecutorWrapper<ProxyOptions>(o => _proxyProcessor.CreateProxy(o)) }
+        };
+
+        try
+        {
+            var parseResult = Parser.Default.ParseArguments(args, commandMap.Keys.ToArray());
+            foreach (var command in commandMap)
+            {
+                // Only matching command gets executed, this is handled by ParserResult.WithParsedAsync(...)
+                await command.Value.Execute(parseResult);
+            }
         }
-
-        public async Task Execute(string[] args)
+        catch (ValidationException e)
         {
-            try
+            Console.WriteLine("You have some errors in the command usage:", ConsoleColors.DefaultColor);
+            foreach (var failure in e.Errors)
             {
-                // Gets a bit dirty...
-                // TODO: Is there a better way registering all commands?
-                await Parser.Default.ParseArguments<
-                        AddConfigOptions, 
-                        UpdateConfigOptions, 
-                        GetConfigOptions,
-                        ConfigurePropertyOptions,
-                        GetQueuesOptions,
-                        GetMessagesOptions,
-                        PurgeMessagesOptions,
-                        MoveMessagesOptions,
-                        EditMessageOptions,
-                        ProxyOptions
-                >(args).MapResult(
-                        (AddConfigOptions o) => _configProcessor.AddConfig(o),
-                        (UpdateConfigOptions o) => _configProcessor.UpdateConfig(o),
-                        (GetConfigOptions o) => _configProcessor.GetConfigs(o),
-                        (ConfigurePropertyOptions o) => _configProcessor.ConfigureProperty(o),
-                        (GetQueuesOptions o) => _queueProcessor.GetQueues(o),
-                        (GetMessagesOptions o) => _messageProcessor.GetMessages(o),
-                        (PurgeMessagesOptions o) => _messageProcessor.PurgeMessages(o),
-                        (MoveMessagesOptions o) => _messageProcessor.MoveMessages(o),
-                        (EditMessageOptions o) => _messageProcessor.EditMessage(o),
-                        (ProxyOptions o) => _proxyProcessor.CreateProxy(o),
-                        _ => Task.FromResult(-1)
-                    );
+                Console.WriteLine(failure.ErrorMessage, ConsoleColors.ErrorColor);
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message, ConsoleColors.ErrorColor);
-                Console.WriteLine();
-                Console.WriteLine("Extended Information:", ConsoleColors.HighlightColor);
-                Console.WriteLine(e.ToString(), Color.Tomato);
-            }
+            Console.WriteLine();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message, ConsoleColors.ErrorColor);
+            Console.WriteLine();
+            // Extended information will only be logged, if verbosity is toggled using --verbose option
+            _logger.LogInformation(e, "Extended exception information");
         }
     }
 }

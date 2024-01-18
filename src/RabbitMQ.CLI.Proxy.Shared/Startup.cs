@@ -5,53 +5,52 @@ using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using RabbitMQ.Library;
 
-namespace RabbitMQ.CLI.Proxy.Shared
+namespace RabbitMQ.CLI.Proxy.Shared;
+
+public class Startup
 {
-    public class Startup
+    public Startup(IConfiguration configuration)
     {
-        public Startup(IConfiguration configuration)
+        _configuration = configuration;
+    }
+
+    private readonly IConfiguration _configuration;
+
+    // This method gets called by the runtime. Use this method to add services to the container.
+    public void ConfigureServices(IServiceCollection services)
+    {
+        var config = _configuration.GetSection("RabbitMQ").Get<ProxyConfiguration>();
+        services.AddSingleton(config);
+        services.AddTransient<RabbitMqClient>();
+        services.AddAutoMapper(c => c.AddMaps(typeof(RabbitMqClient).Assembly));
+        services.AddLogging(c => c
+            .ClearProviders()
+            .AddConsole()
+            .AddConfiguration(_configuration.GetSection("Logging"))
+        );
+        services.AddSwaggerGen(c =>
         {
-            _configuration = configuration;
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "RabbitMQ.CLI.Proxy", Version = "v1" });
+        });
+        services.AddControllers();
+    }
+
+    // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+    public void Configure(IApplicationBuilder app)
+    {
+        if (_configuration.GetSection("EnableSwagger").Get<bool>())
+        {
+            var logger = app.ApplicationServices.GetRequiredService<ILogger<Startup>>();
+            logger.LogInformation("Swagger endpoint and ui enabled.");
+            app.UseDeveloperExceptionPage()
+                .UseSwagger()
+                .UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "RabbitMQ.CLI.Proxy v1"));
         }
 
-        private readonly IConfiguration _configuration;
-
-        // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
-        {
-            var config = _configuration.GetSection("RabbitMQ").Get<ProxyConfiguration>();
-            services.AddSingleton(config);
-            services.AddTransient<RabbitMqClient>();
-            services.AddAutoMapper(c => c.AddMaps(typeof(RabbitMqClient).Assembly));
-            services.AddLogging(c => c
-                .ClearProviders()
-                .AddConsole()
-                .AddConfiguration(_configuration.GetSection("Logging"))
-            );
-            services.AddSwaggerGen(c =>
+        app.UseRouting()
+            .UseEndpoints(endpoints =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "RabbitMQ.CLI.Proxy", Version = "v1" });
+                endpoints.MapControllers();
             });
-            services.AddControllers();
-        }
-
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app)
-        {
-            if (_configuration.GetSection("EnableSwagger").Get<bool>())
-            {
-                var logger = app.ApplicationServices.GetRequiredService<ILogger<Startup>>();
-                logger.LogInformation("Swagger endpoint and ui enabled.");
-                app.UseDeveloperExceptionPage()
-                    .UseSwagger()
-                    .UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "RabbitMQ.CLI.Proxy v1"));
-            }
-
-            app.UseRouting()
-                .UseEndpoints(endpoints =>
-                {
-                    endpoints.MapControllers();
-                });
-        }
     }
 }

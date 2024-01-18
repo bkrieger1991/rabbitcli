@@ -9,32 +9,14 @@ This CLI tool helps fetching messages with extended filter functionality, editin
 
 It allows you to configure more than one instance, to e.g. perform actions on your local development instance as well on your staging or productive environment.
 
-It's written in C# .NET 5.0 and available for download in the branch `releases`.
+It's written in C# .NET 6.0 and available for download in the branch `releases`.
 
 - [What is RabbitCLI?](#what-is-rabbitcli)
 - [RabbitMQ HTTP-Proxy Docker-Image](#rabbitmq-http-proxy-docker-image)
 - [Download latest CLI-Tool release](#download-latest-cli-tool-release)
     - [See release branch for all available releases](#see-release-branch-for-all-available-releases)
   - [Installation](#installation)
-- [Commands](#commands)
-  - [Configuration](#configuration)
-    - [Command: `add-config`](#command-add-config)
-    - [Configuration Storage](#configuration-storage)
-    - [Command: `get-configs`](#command-get-configs)
-    - [Command: `update-config`](#command-update-config)
-    - [Command: `config-property`](#command-config-property)
-  - [Queues](#queues)
-    - [Command: `get-queues`](#command-get-queues)
-  - [Messages](#messages)
-    - [Command: `get-messages`](#command-get-messages)
-    - [Filter possibilites](#filter-possibilites)
-    - [Live-Streaming messages](#live-streaming-messages)
-    - [Command: `move-messages`](#command-move-messages)
-    - [Command: `purge-messages`](#command-purge-messages)
-    - [Command: `edit-message`](#command-edit-message)
-  - [HTTP-Proxy: Command `proxy`](#http-proxy-command-proxy)
-    - [Publishing messages](#publishing-messages)
-      - [Message Headers](#message-headers)
+- [Command structure](#commands)
 - [Contribution & Development](#contribution--development)
   - [Pull request into `master`](#pull-request-into-master)
   - [Create a release](#create-a-release)
@@ -51,54 +33,57 @@ There is a docker-image in the official docker-hub, that enables you to integrat
 Just unzip the downloaded archive and either invoke a command (described below) on the `rabbitcli.exe` directly or run the `install.ps1` script to copy the RabbitMQ CLI into `C:\Users\<YourName>\AppData\Local\RabbitCLI\rabbitcli.exe` and adding this path to your user's `PATH` environment variable.
 
 # Commands
+General Usage: **`rabbitcli <resource> <action> <options>`**<br>
+## Structure of resources/actions
+|**rabbitcli**|`<resource>`|`<action>`|`<options>`|
+|--|--|--|--|
+||`config`|`add`|`--amqp` *(required)*, `--web` *(required)*, `--name`, `--ignore-invalid-cert`, `--amqps-tls-version`, `--amqps-tls-server`
+|||`get`|`--name`
+|||`delete`|`--name` *(required)*
+|||`edit`|`--name` *(required)*, `--amqp`, `--web`, `--ignore-invalid-cert`, `--amqps-tls-version`, `--amqps-tls-server`
+|||`use`|`--name` *(required)*
+||`property`|`get`||
+|||`set`|`--name` *(required)*, `--value` *(required)*
+||`queue`|`get`|`--queue`, `--qid`, `--sort`, `--desc`, `--limit`, `--filter`, `--exclude`
+||`message`|`get`|`--qid` *(required)*, `--queue` *(required)*, `--hash`, `--dump`, `--dump-metadata`, `--body`, `--headers`, `--json`, `--live-view`
+|||`purge`|`--qid` *(required)*, `--queue` *(required)*, `--hash`, `--filter`
+|||`move`|`--from-id` *(required)*, `--from` *(required)*, `--to-id` *(required)*, `--to` *(required)*, `--filter`
+|||`edit`|`--qid` *(required)*, `--hash` *(required)*
 ## Configuration
 For management of different configurations, you can add, change and delete configurations.
 A configuration contains all information to establish a connection to a RabbitMQ host.
-### Command: `add-config`
+### Command: `config add`
 To create a new configuration, just call the `add-config` command and provide all required options.
 
 |Option|Example Value|Desription|
 |---|---|---|
-|`--username`|*guest*|A username, permitted to access<br>RabbitMQ Management API and perform AMQP Actions|
-|`--password`|*guest*|The password of your user|
-|`--vhost`|"*/*" or *youHost*|The virtualhost you want to connect to.<br>If you want to manage different virtual-hosts,<br>you have to create different configurations.|
-|`--host`|*localhost*|The hostname used for amqp and management api calls|
-|`--amqp-port`|*5672*|The AMQP port (default: 5672)|
-|`--web-port`|*15672*|The management API port (default: 15672)|
-|`--web-host`|*my.rabbit.api*|A different hostname for your management api|
-|`--ssl`||Provide this argument to enable SSL|
-|`--name`|*myConfig*|Name of you configuration.|
+|`--amqp`|*guest*|The amqp-connectionstring. If username and password are equal to web credentials, you can leave them blank.<br/>Examples:<br/>`amqp://guest@guest:localhost:5672/vhost`<br/>`amqps://your-amqp.host.com:5671/vhost`|
+|`--web`|*guest*|The web-connectionstring. If username and password are equal to amqp credentials, you can leave them blank. <br/>Examples:<br/>`http://localhost:15672`<br/>`https://guest:guest@your-other-host.com:443`|
+|`--name`|*myconfig*|The name to refer to this configuration|
+|`--ignore-invalid-cert`||The hostname used for amqp and management api calls|
+|`--amqps-tls-version`|*5672*|The AMQP port (default: 5672)|
+|`--amqps-tls-server`|*15672*|The management API port (default: 15672)|
 
-The **default** configurtaion will be created if you don't provide a name for a certain configuration.
-The default configuration entry always gets loaded, if you don't provide a configuration-name in your commands (using the `-c` or `--config` option)
+**Example of creating a config**
+```
+rabbitcli config add \ 
+    --amqp amqp://guest:guest@localhost:5672/ \
+    --web http://localhost:15672
+```
+> If you don't provide `--name` attribute, the name "default" is chosen.
 
-**Example of creating a default config**
-```
-rabbitcli add-config \
-    --username guest \
-    --password guest \
-    --vhost "/" \
-    --host localhost
-```
 **Example of creating a configuration with name `configname`**
 ```
-rabbitcli add-config --name configname \
-    --username guest \
-    --password guest \
-    --vhost "/" \
-    --host localhost
+rabbitcli config add \ 
+    --amqp amqp://guest:guest@localhost:5672/ \
+    --web http://localhost:15672 \
+    --name configname
 ```
-**Example of creating a configuration with a different management API hostname**
+**Example of creating a configuration with different management API credentials**
 ```
-rabbitcli add-config \
-    --username guest \
-    --password guest \
-    --vhost "/" \
-    --host my.rabbit.mq \
-    --amqp-port 5672 \
-    --web-host api.rabbit.mq \
-    --web-port 80 \
-    --ssl
+rabbitcli config add \ 
+    --amqp amqp://guest:guest@localhost:5672/ \
+    --web http://otherguest:otherguest@localhost:15672 \
 ```
 
 ### Configuration Storage
@@ -113,72 +98,110 @@ The configuration looks like:
 ```
 The content of a configuration is stored encrypted and gets only decrypted when using the command. So your credentials are not persisted in plain-text.
 
-### Command: `get-configs`
-With this command you can simply request what configurations currently exists on your system and output a single configuration. Options for this command:
+### Command: `config get`
+Either get a list of all configs or output a single config when providing the `--name` option.
 
 |Option|Example Value|Desription|
 |---|---|---|
-|`--name`|*myConfig*|Name of you configuration you want to view in detail|
+|`--name`|*myConfig*|Name of you configuration you want to view in detail (optional)|
 
 **Get all configurations existing**
 ```
-rabbitcli get-configs
+rabbitcli config get
 ```
 
 **Get `default` configuration in detail**
 ```
-rabbitcli get-configs --name default
+rabbitcli config get --name default
 ```
 Result Example:
 ```json
 {
-  "Username": "guest",
-  "Password": "guest",
-  "VirtualHost": "/",
-  "Name": "default",
-  "AmqpAddress": "localhost",
-  "AmqpPort": 5672,
-  "WebInterfaceAddress": "localhost",
-  "WebInterfacePort": 15672,
-  "Ssl": false
+  "Name": "black",
+  "Amqp": {
+    "Username": "guest",
+    "Password": "guest",
+    "VirtualHost": "ierp",
+    "Port": 5672,
+    "Hostname": "amqps-rabbitmq.black.igus.com",
+    "IsAmqps": false,
+    "Unsecure": true,
+    "TlsVersion": null,
+    "TlsServerName": null
+  },
+  "Web": {
+    "Username": "guest",
+    "Password": "guest",
+    "Port": 80,
+    "Hostname": "mgmt-rabbitmq.black.igus.com",
+    "Ssl": false,
+    "Unsecure": true
+  }
 }
-```
-The `get-configs` command will output the decrypted configuration with the password, so you can check what value is in there.
 
-### Command: `update-config`
-This command helps you change single values within a existing configuration.
-Providing the `--delete` option, you can delete a configuration.
+CLI-Parameters for edit:
+rabbitcli config edit --name black --amqp amqp://guest:guest@localhost:5672/ierp --web http://guest:guest@mgmt-rabbitmq.black.igus.com/ --ignore-invalid-cert
+```
+The `config get` command will output the decrypted configuration with the password, so you can check what value is in there.
 
-**Change username in default configuration**
-```
-rabbitcli update-config --name default --username new-username
-```
-**Delete a configuration**
-```
-rabbitcli update-config --name myConfig --delete
-```
-> When you want to delete your `default` configuration, you have to provide the name explicitly.
-> You can then create a new default-config as usual 
+>You may notice, that a template for editing the configuration will be printed. Just to make things easier.
 
-### Command: `config-property`
-This command can set configuration properties used, to configure the general behaviour of the rabbitcli.
+### Command: `config edit`
+This command helps you change values within an existing configuration.
+You have to provide the same arguments as when creating a configuration.
+
+You can copy & paste an edit-command when executing `rabbitcli config get --name myconfig`.
+
+Example:
+```
+rabbitcli config edit \
+  --name black \
+  --amqp amqp://guest:guest@localhost:5672/ierp \
+  --web http://guest:guest@mgmt-rabbitmq.black.igus.com/ \
+  --ignore-invalid-cert
+```
+
+### Command: `config delete`
+If you want to delete a configuration, simply provide your name in `--name` option:
+```
+rabbitcli config delete --name myconfig
+```
+
+### Command: `config use`
+You can configure any of your configurations as "default". <br/>
+This way, it gets used in every other command (like e.g. `rabbitcli queue get`) as long there is no `-c` or `--config` specified.
+
+Example: 
+```
+rabbitcli config use --name myconfig
+```
+
+### Command: `property get`
+This command shows a list of configurable properties. Properties are meant as global configuration keys, that control the behavior of the rabbitcli tool.
+
+Example of getting all properties:
+```
+rabbitcli property get
+```
+
+### Command: `property set`
+This command can get properties, to configure the general behaviour of the rabbitcli.
 
 List of options:
 
 |Option|Example Value|Desription|
 |---|---|---|
-|`--list`||Outputs a list of all properties available and the current value|
-|`--set`|*propertyname*|Provide a property-name to set a new value|
-|`--value`|*yourValue*|When a property-name was provided, you also need to provide a value|
+|`--name`|*propertyname*|Outputs a list of all properties available and the current value|
+|`--value`|*value*|Provide a property-name to set a new value|
 
 **Example of configuring an alternative text editor for editing messages**
 ```
-rabbitcli --set "texteditorpath" --value "code"
+rabbitcli property set --name "texteditorpath" --value "code"
 ```
 
 ## Queues
-### Command: `get-queues`
-The `get-queues` command has following options:
+### Command: `queues get`
+The `queues get` command has following options:
 |Option|Example Value|Description|
 |---|---|---|
 |`-c` or `--config`|*myConfig*|The configuration you want to use.<br>Defaults to `default` config.|
@@ -210,17 +233,17 @@ Example Queue-Object when displaying details:
 
 **Example of listing top 10 queues ordered by message-count:**
 ```
-rabbitcli get-queues --sort messages --desc --limit 10
+rabbitcli queues get --sort messages --desc --limit 10
 ```
 
 **Example of showing detials about a certain queue:**
 ```
-rabbitcli get-queues --qid 1098535bebc1
+rabbitcli queues get --qid 1098535bebc1
 ```
 
 ## Messages
-### Command: `get-messages`
-This are the options available for the `get-messages` command
+### Command: `message get`
+This are the options available for the `messages get` command
 
 |Option|Example Value|Description|
 |---|---|---|
@@ -263,8 +286,8 @@ After that, every message is fetched from that temporary queue and will get dire
 
 You can see a live-stream of messages in your console. This even works using a filter.
 
-### Command: `move-messages`
-To move messages between queues, you can use the `move-messages` command. Here are the options you can provide:
+### Command: `message move`
+To move messages between queues, you can use the `message move` command. Here are the options you can provide:
 
 |Option|Example Value|Description|
 |---|---|---|
@@ -280,21 +303,21 @@ To move messages between queues, you can use the `move-messages` command. Here a
 
 **Move messages from one queue to another**
 ```
-rabbitcli move-messages \
+rabbitcli message move \
   --from My.Source.Queue \
   --to-qid 1098535bebc1
 ```
 
 **Move only messages to a new queue, that match a certain filter**
 ```
-rabbitcli move-messages \
+rabbitcli message move \
   --from-qid 1098535bebc1 \
   --to Backup.Queue.Of.1098535bebc1 \
   --new \
   --filter "headers:Some error message"
 ```
 
-### Command: `purge-messages`
+### Command: `message purge`
 You can purge messages from queues using the benefits known from other commands: filter and adressing single messages. Here are the options of the command:
 
 |Option|Example Value|Description|
@@ -309,8 +332,8 @@ You can purge messages from queues using the benefits known from other commands:
 
 **Purging a message using the `--hash` option will purge all messages where the calculated hash matches**
 
-### Command: `edit-message`
-You can edit the **content** of a message in a queue. For this you can use the `edit-message` command with following options:
+### Command: `message edit`
+You can edit the **content** of a message in a queue. For this you can use the `message edit` command with following options:
 
 |Option|Example Value|Description|
 |---|---|---|
@@ -323,13 +346,13 @@ This command will make use of the configured property `TextEditorPath`. The set 
 
 **Edit a message with hash "8130d8764f31" using the default configuration**
 ```
-rabbitcli edit-message --queue My.Queue --hash 8130d8764f31
+rabbitcli message edit --queue My.Queue --hash 8130d8764f31
 ```
 
 
 If you wish to use another editor, feel free to update the value to use for e.g. VS Code:
 ```
-rabbitcli --set texteditorpath --value "code"
+rabbitcli property set --name texteditorpath --value "code"
 ```
 
 ## HTTP-Proxy: Command `proxy`

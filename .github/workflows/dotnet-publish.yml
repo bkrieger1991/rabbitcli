@@ -10,11 +10,11 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.x
+        dotnet-version: 8.0.x
     - name: Restore dependencies
       run: dotnet restore RabbitMQ.Toolbox.sln
     - name: Build
-      run: dotnet build --no-restore RabbitMQ.Toolbox.sln
+      run: dotnet build -c Release --no-restore RabbitMQ.Toolbox.sln
     - name: Publish application for win-x64
       run: dotnet publish --no-build --self-contained true -r win-x64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true src/RabbitMQ.CLI/RabbitMQ.CLI.csproj -o ./publish
     - name: Copy install.ps1 to publish dir
