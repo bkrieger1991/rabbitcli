@@ -236,7 +236,7 @@ public static class ExtensionMethods
         }
 
         var aesKey = new byte[24];
-        var hash = new SHA512CryptoServiceProvider();
+        var hash = SHA512.Create();
         Buffer.BlockCopy(hash.ComputeHash(Encoding.UTF8.GetBytes(key)), 0, aesKey, 0, 24);
         aes.Key = aesKey;
 

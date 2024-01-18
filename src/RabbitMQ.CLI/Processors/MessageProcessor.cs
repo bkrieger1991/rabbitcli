@@ -7,7 +7,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ConsoleTables;
-using MimeSharp;
 using Newtonsoft.Json;
 using RabbitMQ.CLI.CommandLineOptions;
 using RabbitMQ.Library;
@@ -338,13 +337,12 @@ public class MessageProcessor
 
     private string GuessFileEnding(string messageContentType)
     {
-        var mime = new Mime();
         switch(messageContentType)
         {
             case "application/cloudevents": return ".json";
             default:
             {
-                var ext = mime.Extension(messageContentType).FirstOrDefault();
+                var ext = MimeMapping.MimeUtility.GetExtensions(messageContentType).FirstOrDefault();
                 return ext == null ? "" : $".{ext}";
             }
         }
