@@ -16,10 +16,10 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 8.0.x
     - name: Restore dependencies
       run: dotnet restore RabbitMQ.Toolbox.sln
     - name: Build
-      run: dotnet build --no-restore RabbitMQ.Toolbox.sln
+      run: dotnet build -c Release --no-restore RabbitMQ.Toolbox.sln
     - name: Test
       run: dotnet test --no-build RabbitMQ.Toolbox.sln
