@@ -22,4 +22,4 @@ jobs:
     - name: Build
       run: dotnet build -c Release --no-restore RabbitMQ.Toolbox.sln
     - name: Test
-      run: dotnet test --no-build RabbitMQ.Toolbox.sln
+      run: dotnet test -c Release --no-build RabbitMQ.Toolbox.sln
