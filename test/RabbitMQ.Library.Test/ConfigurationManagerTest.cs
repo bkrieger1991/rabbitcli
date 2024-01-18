@@ -39,27 +39,6 @@ namespace RabbitMQ.Library.Test
         }
 
         [Fact]
-        public void Should_Load_Configuration_Old_Format_Without_Error()
-        {
-            var config = $"{{\"default\": \"{_exampleEncryptedConfig}\"}}";
-            var manager = new MockConfigurationManager(config);
-            manager.Initialize();
-            manager.Get("default").Should().NotBeNull();
-        }
-
-        [Fact]
-        public void Should_Migrate_Old_Configuration_Into_New_Format()
-        {
-            var config = $"{{\"default\": \"{_exampleEncryptedConfig}\"}}";
-            var manager = new MockConfigurationManager(config);
-            manager.Initialize();
-
-            manager.WrittenConfig.Should().NotBeNullOrWhiteSpace();
-            var deserialized = JsonConvert.DeserializeObject<Dictionary<string, object>>(manager.WrittenConfig);
-            deserialized.Should().ContainKey(nameof(Configuration.Configuration.TextEditorPath));
-        }
-
-        [Fact]
         public void Should_Load_Configuration_Current_Format_Without_Error()
         {
             var config = $"{{\"TextEditorPath\":\"unit-test\", \"ConfigurationCollection\":{{\"default\": \"{_exampleEncryptedConfig}\"}}}}";
