@@ -67,11 +67,11 @@ public class MessageOptions : DefaultListOptions, ICommandLineOption
             // ===== Rules for QueueId and QueueName
             RuleFor(x => x.QueueId)
                 .NotEmpty()
-                .When(x => x.QueueName.IsEmpty())
+                .When(x => x.QueueName.IsEmpty() && !x.Action.Is(Actions.Move))
                 .WithMessage("Please provide either --qid (queue id) or --queue (queue name)");
             RuleFor(x => x.QueueName)
                 .NotEmpty()
-                .When(x => x.QueueId.IsEmpty())
+                .When(x => x.QueueId.IsEmpty() && !x.Action.Is(Actions.Move))
                 .WithMessage("Please provide either --qid (queue id) or --queue (queue name)");
             RuleFor(x => x.QueueId)
                 .Empty()

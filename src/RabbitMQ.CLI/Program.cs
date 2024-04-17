@@ -28,4 +28,5 @@ var provider = new ServiceCollection()
     .AddSingleton<ProxyProcessor>()
     .BuildServiceProvider();
 
-await provider.GetRequiredService<CommandLineProcessor>().Execute(args);
+var commandLineProcessor = provider.GetRequiredService<CommandLineProcessor>();
+await commandLineProcessor.Execute(args);
