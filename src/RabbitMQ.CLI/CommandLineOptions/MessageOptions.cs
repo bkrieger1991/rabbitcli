@@ -147,7 +147,7 @@ public class MessageOptions : DefaultListOptions, ICommandLineOption
             // ====== Rules for get-options
             RuleFor(x => x.DumpDirectory)
                 .Empty()
-                .When(x => !x.Action.Is(Actions.Get) || !x.Action.Is(Actions.Restore))
+                .When(x => !x.Action.Is(Actions.Get) && !x.Action.Is(Actions.Restore))
                 .WithMessage("You can use --dump <directory> only when fetching messages with \"get\" or restoring a dump with \"restore\"");
             RuleFor(x => x.LiveView)
                 .Must(x => !x)
