@@ -1,0 +1,76 @@
+name: Publish OSX arm64-x64 Universal Bundle
+
+on: workflow_dispatch
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 8.0.x
+    - name: Prepare MacOS bundle directory
+      run: |
+        mkdir -p ./publish/Bundle/Contents/MacOS/osx-arm64
+        mkdir -p ./publish/Bundle/Contents/MacOS/osx-x64
+        mkdir -p ./publish/Bundle/Contents/MacOS/shared
+        mkdir -p ./publish/Bundle/Contents/Resources
+    - name: Restore & Build & Publish Application [OSX-x64]
+      run: dotnet publish --self-contained true -r osx-x64 -p:PublishReadyToRun=false -p:TieredCompilation=false -p:PublishTrimmed=false -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true src/RabbitMQ.CLI/RabbitMQ.CLI.csproj -o ./publish/Bundle/Contents/MacOS/osx-x64
+    - name: Restore & Build & Publish Application [OSX-ARM64]
+      run: dotnet publish --self-contained true -r osx-arm64 -p:PublishReadyToRun=false -p:TieredCompilation=false -p:PublishTrimmed=false -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true src/RabbitMQ.CLI/RabbitMQ.CLI.csproj -o ./publish/Bundle/Contents/MacOS/osx-arm64
+    - name: Copy Info.plist, universal executable and icon to bundle
+      run: |
+        cp ./macos-bundle-info.plist ./publish/Bundle/Contents/Info.plist
+        cp ./macos-bundle-executable.sh ./publish/Bundle/Contents/MacOS/rabbitcli
+        cp ./src/RabbitMQ.CLI/macos-rabbitcli.icns ./publish/Bundle/Contents/Resources/icon.icns
+    - name: Write version into file
+      run: grep -oP "(<Version>).*(</Version>)" src/RabbitMQ.CLI/RabbitMQ.CLI.csproj | awk -F '[><]' '{print $3}' > ./publish/version
+    - name: Save Published Files
+      uses: actions/upload-artifact@v2
+      with:
+        name: publish-files
+        path: ./publish/
+  push-releases:
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v2
+      with:
+        name: publish-files
+        path: osx
+    - name: Display structure of downloaded files
+      run: ls -Rla
+      working-directory: ./
+    - name: Get version string
+      id: version
+      run: echo "::set-output name=version::$(cat osx/version)"
+    - name: Output version
+      run: echo Got version - $VERSION
+      env:
+        VERSION: ${{ steps.version.outputs.version }}
+    - name: Install zip
+      uses: montudor/action-zip@v1
+    - name: Pack published files for OSX Bundle
+      run: zip -qq -r RabbitCLI-${{ steps.version.outputs.version }}.zip osx/Bundle
+    - uses: actions/checkout@v2
+      name: Checkout releases branch
+      with:
+        ref: releases
+        path: repo
+    - name: Copy archive
+      run: cp RabbitCLI*.zip repo/osx-arm64-x64/
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v3
+      with:
+        path: repo
+        delete-branch: true
+        branch: release/rabbitcli
+        title: New Release of RabbitCLI
+        commit-message: Adds new release-package
+        body: |
+          Adds new release-package
+          [Created automatically]
+  
