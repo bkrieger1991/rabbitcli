@@ -1,4 +1,4 @@
-name: Publish Windows-x64
+name: Publish Windows x64 ZIP
 
 on: workflow_dispatch
 
