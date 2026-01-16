@@ -3,7 +3,7 @@ name: Publish OSX arm64-x64 Universal Bundle
 on: workflow_dispatch
 
 jobs:
-  publish:
+  build-publish:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -34,7 +34,7 @@ jobs:
         name: publish-files
         path: ./publish/
   push-releases:
-    needs: publish
+    needs: build-publish
     runs-on: ubuntu-latest
     steps:
     - uses: actions/download-artifact@v2

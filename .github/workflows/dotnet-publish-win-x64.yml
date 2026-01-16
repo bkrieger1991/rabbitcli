@@ -27,7 +27,7 @@ jobs:
         name: publish-win-x64
         path: ./publish/
   push-releases:
-    needs: publish-win-x64
+    needs: build-publish
     runs-on: ubuntu-latest
     steps:
     - uses: actions/download-artifact@v2
