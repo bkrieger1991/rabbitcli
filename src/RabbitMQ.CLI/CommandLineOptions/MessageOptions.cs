@@ -5,7 +5,7 @@ using RabbitMQ.Library;
 namespace RabbitMQ.CLI.CommandLineOptions;
 
 [Verb("message", HelpText = "All about handling messages." +
-    "\nGet, edit, move or purge messages." +
+    "\nGet, edit, move or purge messages. Restore messages from saved dumps." +
     "\nUsage: rabbitcli message <action> <options>" +
     "\nExample: rabbitcli message get --queue testqueue --limit 10" +
     "\nMore help: rabbitcli message --help")]
@@ -13,10 +13,10 @@ public class MessageOptions : DefaultListOptions, ICommandLineOption
 {
     public enum Actions
     {
-        Get, Edit, Move, Purge
+        Get, Edit, Move, Purge, Restore
     }
 
-    [Value(0, MetaName = "Action", HelpText = "Provide one action of \"get\", \"edit\", \"move\" or \"purge\".")]
+    [Value(0, MetaName = "Action", HelpText = "Provide one action of \"get\", \"edit\", \"move\", \"purge\" or \"restore\".")]
     public string Action { get; set; }
 
     // ========== Mixed usage
@@ -44,7 +44,7 @@ public class MessageOptions : DefaultListOptions, ICommandLineOption
     // ======== Get exclusive
     [Option("live-view", Required = false, HelpText = "Fetching: ATTENTION: Experimental; attach to a queue using a cloned queue with same exchange bindings. Shows you every incoming message. CTRL+C to cancel viewing and delete the temporary queue.")]
     public bool LiveView { get; set; }
-    [Option("dump", Required = false, HelpText = "Fetching: Provide a directory to dump fetched messages into. Also works with 'live-view'.")]
+    [Option("dump", Required = false, HelpText = "Fetching/Restore: Provide a directory to dump fetched messages into or restore messages from. Also works with 'live-view'.")]
     public string DumpDirectory { get; set; }
     [Option("dump-metadata", Required = false, HelpText = "Fetching: Provide this argument, if you want to also dump metadata (like headers and properties) of the event.")]
     public bool DumpMetadata { get; set; }
@@ -147,8 +147,8 @@ public class MessageOptions : DefaultListOptions, ICommandLineOption
             // ====== Rules for get-options
             RuleFor(x => x.DumpDirectory)
                 .Empty()
-                .When(x => !x.Action.Is(Actions.Get))
-                .WithMessage("You can use --dump <directory> only when fetching messages with \"get\"");
+                .When(x => !x.Action.Is(Actions.Get) || !x.Action.Is(Actions.Restore))
+                .WithMessage("You can use --dump <directory> only when fetching messages with \"get\" or restoring a dump with \"restore\"");
             RuleFor(x => x.LiveView)
                 .Must(x => !x)
                 .When(x => !x.Action.Is(Actions.Get))

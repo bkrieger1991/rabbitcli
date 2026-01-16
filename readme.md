@@ -47,6 +47,7 @@ General Usage: **`rabbitcli <resource> <action> <options>`**<br>
 ||`queue`|`get`|`--queue`, `--qid`, `--sort`, `--desc`, `--limit`, `--filter`, `--exclude`
 ||`message`|`get`|`--qid` *(required)*, `--queue` *(required)*, `--hash`, `--dump`, `--dump-metadata`, `--body`, `--headers`, `--json`, `--live-view`
 |||`purge`|`--qid` *(required)*, `--queue` *(required)*, `--hash`, `--filter`
+|||`restore`|`--qid` *(required)*, `--queue` *(required)*, `--dump`
 |||`move`|`--from-id` *(required)*, `--from` *(required)*, `--to-id` *(required)*, `--to` *(required)*, `--filter`
 |||`edit`|`--qid` *(required)*, `--hash` *(required)*
 ## Configuration
@@ -257,7 +258,7 @@ This are the options available for the `messages get` command
 |`--hash`||Provide a message-hash (shown in result list view) to fetch details<br>about a single message|
 |`--body`||Output body content of a single message. <br>Only works in combination with `--hash` option|
 |`--live-view`||**EXPERIMENTAL**: Read more about this in below section<br>[Live-Streaming messages](#live-streaming-messages)|
-|`--dump`|&lt;Directory&gt;|Stores the message data for each message into the given directory.|
+|`--dump`|&lt;Directory&gt;|Stores the message data for each message into the given directory. For restore command it defines the directory to restore messages from.|
 |`--dump-metadata`||Set option to get a second file <br>(*.meta.json)beside your message-content <br>with all meta-data of the message|
 
 ### Filter possibilites
@@ -353,6 +354,23 @@ rabbitcli message edit --queue My.Queue --hash 8130d8764f31
 If you wish to use another editor, feel free to update the value to use for e.g. VS Code:
 ```
 rabbitcli property set --name texteditorpath --value "code"
+```
+
+### Command: `message restore`
+Use the `message restore` command to re-publish messages that were previously saved with the `--dump` option back into a queue.
+
+|Option|Example Value|Description|
+|---|---|---|
+|`-c` or `--config`|*myConfig*|The configuration to use. Defaults to `default`.| 
+|`--qid`|*1098535bebc1*|The id of the queue to restore messages into (alternative to `--queue`).|
+|`--queue`|*My.Queue.Name*|The name of the queue to restore messages into (alternative to `--qid`).|
+|`--dump`|&lt;Directory&gt;|Directory to read files from. Should contain files produced by `message get --dump`.| 
+
+Note: Each content file may have an accompanying `*-meta.json` file (created with `--dump-metadata`). If present, metadata such as `ContentType`, message properties (e.g. `MessageId`, `AppId`) and `Headers` will be applied when publishing. If `Fields.RoutingKey` exists in the metadata it will be used as the routing key for publishing.
+
+**Example: restore messages from a dump into `My.Queue`**
+```
+rabbitcli message restore --queue My.Queue --dump C:\temp\mydump
 ```
 
 ## HTTP-Proxy: Command `proxy`

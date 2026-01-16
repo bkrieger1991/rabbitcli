@@ -8,6 +8,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using ConsoleTables;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Text;
 using RabbitMQ.CLI.CommandLineOptions;
 using RabbitMQ.Library;
 using RabbitMQ.Library.Configuration;
@@ -47,10 +49,119 @@ public class MessageProcessor
             case MessageOptions.Actions.Purge:
                 await PurgeMessages(options);
                 break;
+            case MessageOptions.Actions.Restore:
+                await RestoreMessages(options);
+                break;
         }
     }
 
-    public async Task GetMessages(MessageOptions options)
+    private async Task RestoreMessages(MessageOptions options)
+    {
+        var config = _configManager.Get(options.ConfigName);
+        _rmqClient.SetConfig(config);
+
+        if (string.IsNullOrWhiteSpace(options.DumpDirectory))
+        {
+            throw new Exception("Please provide a dump directory with --dump <directory> to restore messages from.");
+        }
+        if (!Directory.Exists(options.DumpDirectory))
+        {
+            throw new Exception($"Dump directory '{options.DumpDirectory}' does not exist.");
+        }
+
+        var queueName = await GetQueueNameFromOptions(options.QueueName, options.QueueId);
+
+        var allFiles = Directory.GetFiles(options.DumpDirectory);
+        // Exclude metadata files (they end with "-meta.json")
+        var contentFiles = allFiles.Where(f => !f.EndsWith("-meta.json", StringComparison.InvariantCultureIgnoreCase)).ToArray();
+
+        Console.WriteLine($"Found {contentFiles.Length} files to restore in '{options.DumpDirectory}'", ConsoleColors.DefaultColor);
+
+        foreach (var file in contentFiles)
+        {
+            try
+            {
+                Console.WriteLine($"Restoring '{Path.GetFileName(file)}'...", ConsoleColors.DefaultColor);
+                await RestoreSingleMessage(file, queueName, options);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error restoring file '{Path.GetFileName(file)}': {ex.Message}", ConsoleColors.DefaultColor);
+            }
+        }
+    }
+
+    private async Task RestoreSingleMessage(string file, string queueName, MessageOptions options)
+    {
+        var contentText = await File.ReadAllTextAsync(file);
+
+        // Look for associated metadata file: <base>-meta.json
+        var metaPath = Path.Combine(options.DumpDirectory, Path.GetFileNameWithoutExtension(file) + "-meta.json");
+
+        var parameters = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+        string routingKey = "";
+
+        if (File.Exists(metaPath))
+        {
+            var metaText = await File.ReadAllTextAsync(metaPath);
+            var meta = JObject.Parse(metaText);
+            await FillParametersFromMetadata(meta, parameters);
+            // Routing key from Fields
+            routingKey = meta.SelectToken("Fields.RoutingKey")?.Value<string>() ?? "";
+        }
+
+        // Hint: Publish method also uses UTF8 by default
+        var bytes = Encoding.UTF8.GetBytes(contentText);
+
+        // Publish synchronously (wrapped to avoid blocking caller thread pool)
+        await Task.Run(() => _rmqClient.PublishMessageToQueue(queueName, routingKey ?? "", bytes, parameters));
+
+        Console.WriteLine($"Published '{Path.GetFileName(file)}' to queue '{queueName}'", ConsoleColors.DefaultColor);
+    }
+
+    private async Task FillParametersFromMetadata(JObject meta, Dictionary<string, string> parameters)
+    {
+        // Content type can be on the root or on Properties.ContentType
+        var contentType = meta.Value<string>("ContentType") ?? meta.SelectToken("Properties.ContentType")?.Value<string>();
+        if (!string.IsNullOrWhiteSpace(contentType))
+        {
+            parameters["Content-Type"] = contentType;
+        }
+
+        // Extract properties (map to RMQ-<PropertyName>)
+        var props = meta["Properties"] as JObject;
+        if (props != null)
+        {
+            foreach (var p in props.Properties())
+            {
+                if (string.Equals(p.Name, "Headers", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    // Headers will be added below
+                    continue;
+                }
+
+                var val = p.Value?.ToString();
+                if (val != null)
+                {
+                    parameters[$"RMQ-{p.Name}"] = val;
+                }
+            }
+
+            // Headers
+            var headers = props["Headers"] as JObject;
+            if (headers != null)
+            {
+                foreach (var h in headers.Properties())
+                {
+                    var hval = h.Value?.ToString() ?? string.Empty;
+                    // Add header as normal parameter so RabbitMqClient will place it into IBasicProperties.Headers
+                    parameters[h.Name] = hval;
+                }
+            }
+        }
+    }
+
+    private async Task GetMessages(MessageOptions options)
     {
         var config = _configManager.Get(options.ConfigName);
         _rmqClient.SetConfig(config);
@@ -72,7 +183,7 @@ public class MessageProcessor
         await OutputMessages(options, queueName);
     }
 
-    public async Task PurgeMessages(MessageOptions options)
+    private async Task PurgeMessages(MessageOptions options)
     {
         var config = _configManager.Get(options.ConfigName);
         _rmqClient.SetConfig(config);
@@ -92,7 +203,7 @@ public class MessageProcessor
         Console.WriteLine();
     }
 
-    public async Task MoveMessages(MessageOptions options)
+    private async Task MoveMessages(MessageOptions options)
     {
         var config = _configManager.Get(options.ConfigName);
         _rmqClient.SetConfig(config);
@@ -112,7 +223,7 @@ public class MessageProcessor
         await _rmqClient.TransferMessages(fromName, toName, options.Filter, options.Limit, options.Copy);
     }
 
-    public async Task EditMessage(MessageOptions options)
+    private async Task EditMessage(MessageOptions options)
     {
         var config = _configManager.Get(options.ConfigName);
         _rmqClient.SetConfig(config);
