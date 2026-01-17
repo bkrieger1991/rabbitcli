@@ -6,9 +6,9 @@ jobs:
   build-publish:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 8.0.x
     - name: Prepare MacOS bundle directory
@@ -29,7 +29,7 @@ jobs:
     - name: Write version into file
       run: grep -oP "(<Version>).*(</Version>)" src/RabbitMQ.CLI/RabbitMQ.CLI.csproj | awk -F '[><]' '{print $3}' > ./publish/version
     - name: Save Published Files
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: publish-files
         path: ./publish/
@@ -37,7 +37,7 @@ jobs:
     needs: build-publish
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v5
       with:
         name: publish-files
         path: osx
@@ -55,7 +55,7 @@ jobs:
       uses: montudor/action-zip@v1
     - name: Pack published files for OSX Bundle
       run: zip -qq -r RabbitCLI-${{ steps.version.outputs.version }}.zip osx/Bundle
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
       name: Checkout releases branch
       with:
         ref: releases
@@ -63,7 +63,7 @@ jobs:
     - name: Copy archive
       run: cp RabbitCLI*.zip repo/osx-arm64-x64/
     - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v3
+      uses: peter-evans/create-pull-request@v6
       with:
         path: repo
         delete-branch: true
