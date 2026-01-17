@@ -55,6 +55,13 @@ public class MessageOptions : DefaultListOptions, ICommandLineOption
     [Option("json", Required = false, HelpText = "Fetching: Outputs full information for each message in a queue, as json")]
     public bool OutputJsonList { get; set; }
 
+    // ======== Restore exclusive
+    [Option("content-type", Required = false, HelpText = "Restore: Define which content-type should be set for all restored messages. Overwrites content-type found in *.meta files.")]
+    public string ContentType { get; set; }
+    [Option("routing-key", Required = false, HelpText = "Restore: Define which routing-key should be set for all restored messages. Overwrites routing-key found in *.meta files.")]
+    public string RoutingKey { get; set; }
+
+
     private sealed class Validator : AbstractValidator<MessageOptions>
     {
         public Validator()
@@ -173,6 +180,16 @@ public class MessageOptions : DefaultListOptions, ICommandLineOption
                 .Must(x => !x)
                 .When(x => !x.Action.Is(Actions.Get))
                 .WithMessage("You can use --json option only when fetching messages with \"get\"");
+
+            // ====== Rules for restore-options
+            RuleFor(x => x.ContentType)
+                .Empty()
+                .When(x => !x.Action.Is(Actions.Restore))
+                .WithMessage("You can use --content-type option only when restoring messages with \"restore\"");
+            RuleFor(x => x.RoutingKey)
+                .Empty()
+                .When(x => !x.Action.Is(Actions.Restore))
+                .WithMessage("You can use --routing-key option only when restoring messages with \"restore\"");
         }
     }
 

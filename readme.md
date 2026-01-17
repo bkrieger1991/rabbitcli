@@ -47,7 +47,7 @@ General Usage: **`rabbitcli <resource> <action> <options>`**<br>
 ||`queue`|`get`|`--queue`, `--qid`, `--sort`, `--desc`, `--limit`, `--filter`, `--exclude`
 ||`message`|`get`|`--qid` *(required)*, `--queue` *(required)*, `--hash`, `--dump`, `--dump-metadata`, `--body`, `--headers`, `--json`, `--live-view`
 |||`purge`|`--qid` *(required)*, `--queue` *(required)*, `--hash`, `--filter`
-|||`restore`|`--qid` *(required)*, `--queue` *(required)*, `--dump`
+|||`restore`|`--qid` *(required)*, `--queue` *(required)*, `--dump` *(required)*, `--content-type`, `--routing-key`
 |||`move`|`--from-id` *(required)*, `--from` *(required)*, `--to-id` *(required)*, `--to` *(required)*, `--filter`
 |||`edit`|`--qid` *(required)*, `--hash` *(required)*
 ## Configuration
@@ -365,12 +365,14 @@ Use the `message restore` command to re-publish messages that were previously sa
 |`--qid`|*1098535bebc1*|The id of the queue to restore messages into (alternative to `--queue`).|
 |`--queue`|*My.Queue.Name*|The name of the queue to restore messages into (alternative to `--qid`).|
 |`--dump`|&lt;Directory&gt;|Directory to read files from. Should contain files produced by `message get --dump`.| 
+|`--content-type`|*application/json*|Content type that should be used when publishing all messages. Overwrites value from metadata files.| 
+|`--routing-key`|*some.routing.key*|Routing key that should be used when publishing all messages. Overwrites value from metadata files.| 
 
 Note: Each content file may have an accompanying `*-meta.json` file (created with `--dump-metadata`). If present, metadata such as `ContentType`, message properties (e.g. `MessageId`, `AppId`) and `Headers` will be applied when publishing. If `Fields.RoutingKey` exists in the metadata it will be used as the routing key for publishing.
 
 **Example: restore messages from a dump into `My.Queue`**
 ```
-rabbitcli message restore --queue My.Queue --dump C:\temp\mydump
+rabbitcli message restore --queue My.Queue --dump C:\temp\mydump --content-type application/json
 ```
 
 ## HTTP-Proxy: Command `proxy`

@@ -110,6 +110,16 @@ public class MessageProcessor
             routingKey = meta.SelectToken("Fields.RoutingKey")?.Value<string>() ?? "";
         }
 
+        // Set and overwrite options from command line args (if provided)
+        if (!string.IsNullOrWhiteSpace(options.RoutingKey))
+        {
+            routingKey = options.RoutingKey;
+        }
+        if(!string.IsNullOrWhiteSpace(options.ContentType))
+        {
+            parameters["Content-Type"] = options.ContentType;
+        }
+
         // Hint: Publish method also uses UTF8 by default
         var bytes = Encoding.UTF8.GetBytes(contentText);
 

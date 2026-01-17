@@ -5,7 +5,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Unicode;
 using AutoMapper;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +21,7 @@ public static class ExtensionMethods
     {
         var configManager = new ConfigurationManager();
         configManager.Initialize();
+
         services.AddSingleton(configManager);
 
         services.AddSingleton<RabbitMqClient>();
