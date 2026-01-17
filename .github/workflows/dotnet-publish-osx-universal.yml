@@ -54,7 +54,7 @@ jobs:
     - name: Install zip
       uses: montudor/action-zip@v1
     - name: Pack published files for OSX Bundle
-      run: zip -qq -r RabbitCLI-${{ steps.version.outputs.version }}.zip osx/Bundle
+      run: zip -qq -r RabbitCLI-${{ steps.version.outputs.version }}.zip osx/Bundle/*
     - uses: actions/checkout@v6
       name: Checkout releases branch
       with:
