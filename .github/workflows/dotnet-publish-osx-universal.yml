@@ -60,6 +60,7 @@ jobs:
       with:
         ref: releases
         path: repo
+        persist-credentials: false
     - name: Copy archive
       run: cp RabbitCLI*.zip repo/osx-arm64-x64/
     - name: Create Pull Request
