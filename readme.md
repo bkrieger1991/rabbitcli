@@ -1,5 +1,6 @@
 [![.NET](https://github.com/bkrieger1991/rabbittools/actions/workflows/dotnet.yml/badge.svg)](https://github.com/bkrieger1991/rabbittools/actions/workflows/dotnet.yml)
-[![Publish Windows-x64](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish.yml/badge.svg)](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish.yml)
+[![Publish Windows x64 ZIP](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish-win-x64.yml/badge.svg)](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish-win-x64.yml)
+[![Publish OSX arm64-x64 Universal Bundle](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish-osx-universal.yml/badge.svg)](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish-osx-universal.yml)
 [![Publish Docker Image](https://github.com/bkrieger1991/rabbitcli/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/bkrieger1991/rabbitcli/actions/workflows/docker-publish.yml)
 
 # What is RabbitCLI?
