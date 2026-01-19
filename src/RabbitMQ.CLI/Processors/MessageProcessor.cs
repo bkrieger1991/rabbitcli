@@ -77,17 +77,29 @@ public class MessageProcessor
 
         Console.WriteLine($"Found {contentFiles.Length} files to restore in '{options.DumpDirectory}'", ConsoleColors.DefaultColor);
 
+        Console.WriteLine("Start restoring messages...", ConsoleColors.DefaultColor);
+        var count = 0;
+        var total = contentFiles.Length;
+        var errors = new List<Exception>();
         foreach (var file in contentFiles)
         {
             try
             {
-                Console.WriteLine($"Restoring '{Path.GetFileName(file)}'...", ConsoleColors.DefaultColor);
+                count++;
+                Console.SetCursorPosition(0, Console.CursorTop);
+                Console.Write($"Restoring {count} of {total} ({Math.Round((double)count/total*100d, 2)}%). Errors: {errors.Count}");
+
                 await RestoreSingleMessage(file, queueName, options);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error restoring file '{Path.GetFileName(file)}': {ex.Message}", ConsoleColors.DefaultColor);
+                errors.Add(ex);
             }
+        }
+
+        foreach (var err in errors)
+        {
+            Console.WriteLine(err.Message, ConsoleColors.ErrorColor);
         }
     }
 
@@ -125,8 +137,6 @@ public class MessageProcessor
 
         // Publish synchronously (wrapped to avoid blocking caller thread pool)
         await Task.Run(() => _rmqClient.PublishMessageToQueue(queueName, routingKey ?? "", bytes, parameters));
-
-        Console.WriteLine($"Published '{Path.GetFileName(file)}' to queue '{queueName}'", ConsoleColors.DefaultColor);
     }
 
     private async Task FillParametersFromMetadata(JObject meta, Dictionary<string, string> parameters)
@@ -201,12 +211,21 @@ public class MessageProcessor
 
         if (!string.IsNullOrWhiteSpace(options.Hash))
         {
-            await _rmqClient.PurgeMessage(queueName, options.Hash);
-            Console.Write("Message purged", ConsoleColors.DefaultColor);
+            await _rmqClient.PurgeMessage(queueName, options.Hash, progress =>
+            {
+                Console.SetCursorPosition(0, Console.CursorTop);
+                Console.Write($"Scanning messages {progress}");
+            });
+            Console.WriteLine();
+            Console.WriteLine("Message purged", ConsoleColors.DefaultColor);
             return;
         }
 
-        var count = await _rmqClient.PurgeMessages(queueName, options.Filter);
+        var count = await _rmqClient.PurgeMessages(queueName, options.Filter, progress =>
+        {
+            Console.SetCursorPosition(0, Console.CursorTop);
+            Console.Write($"Purging messages {progress}. {progress.Affected} purged.");
+        });
         Console.WriteLine();
         Console.Write("Messages purged: ", ConsoleColors.DefaultColor);
         Console.WriteLine(count, ConsoleColors.DefaultColor);Console.WriteLine();
@@ -230,7 +249,12 @@ public class MessageProcessor
             await _rmqClient.CreateQueue(toName, true, false, new QueueCreateArgument[] {});
         }
 
-        await _rmqClient.TransferMessages(fromName, toName, options.Filter, options.Limit, options.Copy);
+        await _rmqClient.TransferMessages(fromName, toName, options.Filter, options.Limit, options.Copy, progress =>
+        {
+            Console.SetCursorPosition(0, Console.CursorTop);
+            Console.Write($"Moving messages {progress}. {progress.Affected} moved.");
+        });
+        Console.WriteLine();
     }
 
     private async Task EditMessage(MessageOptions options)
@@ -245,7 +269,12 @@ public class MessageProcessor
                 "\n\trabbitcli --set texteditorpath --value \"editor\"");
         }
 
-        var message = await _rmqClient.GetMessage(queueName, options.Hash);
+        var message = await _rmqClient.GetMessage(queueName, options.Hash, progress =>
+        {
+            Console.SetCursorPosition(0, Console.CursorTop);
+            Console.Write($"Scanning messages {progress}");
+        });
+        Console.WriteLine();
 
         if (message is null)
         {
@@ -310,7 +339,7 @@ public class MessageProcessor
         Console.CancelKeyPress += CancellationHandler;
         while (!token.IsCancellationRequested)
         {
-            var messages = await _rmqClient.GetMessages(tempQueue.Name, 0, options.Filter, true, token);
+            var messages = await _rmqClient.GetMessages(tempQueue.Name, 0, options.Filter, true, null, token);
 
             if (options.DumpDirectory != null)
             {
@@ -379,11 +408,19 @@ public class MessageProcessor
 
     private async Task OutputMessages(MessageOptions options, string queueName)
     {
-        var messages = await _rmqClient.GetMessages(queueName, options.Limit, options.Filter);
+        Console.WriteLine("Fetching messages...", ConsoleColors.DefaultColor);
+        
+        var messages = await _rmqClient.GetMessages(queueName, options.Limit, options.Filter, progressCallback: (progress) =>
+        {
+            Console.SetCursorPosition(0, Console.CursorTop);
+            Console.Write($"Reading messages {progress}. {progress.Affected} filtered.");
+        });
+        Console.WriteLine();
 
 
         if (options.DumpDirectory != null)
         {
+            Console.WriteLine($"Storing loaded messages to: {options.DumpDirectory}...");
             await Task.WhenAll(messages.Select(m => DumpMessage(options, m)));
         }
 
@@ -410,8 +447,14 @@ public class MessageProcessor
 
     private async Task OutputSingleMessage(MessageOptions options, string queueName)
     {
-        var message = await _rmqClient.GetMessage(queueName, options.Hash);
-        if(message is null)
+        var message = await _rmqClient.GetMessage(queueName, options.Hash, progress =>
+        {
+            Console.SetCursorPosition(0, Console.CursorTop);
+            Console.Write($"Scanning messages {progress}");
+        });
+        Console.WriteLine();
+
+        if (message is null)
         {
             Console.WriteLine("No message found.");
         }

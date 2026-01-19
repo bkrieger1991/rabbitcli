@@ -146,7 +146,8 @@ public class RabbitMqClient
         string targetQueue,
         string filter,
         int limit,
-        bool copy
+        bool copy,
+        Action<MessageActionProgress> progressCallback = null
     )
     {
         using var connection = _amqpConnectionFactory.CreateConnection();
@@ -166,7 +167,8 @@ public class RabbitMqClient
                     {
                         m.BasicAck(msg.DeliveryTag, false);
                     }
-                }
+                },
+                progressCallback
             );
         }
         finally
@@ -211,8 +213,12 @@ public class RabbitMqClient
         return filtered;
     }
 
-    public async Task<AmqpMessage> GetMessage(string queue, string hash,
-        CancellationToken cancellationToken = default)
+    public async Task<AmqpMessage> GetMessage(
+        string queue, 
+        string hash,
+        Action<MessageActionProgress> progressCallback = null,
+        CancellationToken cancellationToken = default
+    )
     {
         AmqpMessage message = null;
         await IterateMessages(
@@ -227,6 +233,7 @@ public class RabbitMqClient
                     message = mappedMessage;
                 }
             },
+            progressCallback,
             cancellationToken
         );
 
@@ -238,6 +245,7 @@ public class RabbitMqClient
         int limit,
         string filter = null,
         bool acknowledge = false,
+        Action<MessageActionProgress> progressCallback = null,
         CancellationToken cancellationToken = default
     )
     {
@@ -254,13 +262,14 @@ public class RabbitMqClient
                     model.BasicAck(msg.DeliveryTag, false);
                 }
             },
+            progressCallback,
             cancellationToken
         );
 
         return messages.ToArray();
     }
 
-    public async Task<int> PurgeMessages(string queue, string filter)
+    public async Task<int> PurgeMessages(string queue, string filter, Action<MessageActionProgress> progress = null)
     {
         var count = 0;
         await IterateMessages(
@@ -271,12 +280,14 @@ public class RabbitMqClient
             {
                 count++;
                 model.BasicAck(msg.DeliveryTag, false);
-            });
+            },
+            progress
+        );
 
         return count;
     }
 
-    public async Task PurgeMessage(string queue, string hash)
+    public async Task PurgeMessage(string queue, string hash, Action<MessageActionProgress> progress = null)
     {
         await IterateMessages(
             queue,
@@ -289,7 +300,8 @@ public class RabbitMqClient
                 {
                     model.BasicAck(msg.DeliveryTag, false);
                 }
-            }
+            },
+            progress
         );
     }
 
@@ -468,15 +480,35 @@ public class RabbitMqClient
         }
     }
 
-    private Task<int> IterateMessages(
+    public class MessageActionProgress
+    {
+        public int Current { get; set; }
+        public int Total { get; set; }
+        public int Affected { get; set; }
+        public double Percentage => Math.Min(Math.Round(Current / (double)Total * 100d, 2), 100);
+
+        public override string ToString()
+        {
+            return $"{Current} of {Total} ({Percentage}%)";
+        }
+    }
+    private async Task<int> IterateMessages(
         string queue,
         string filter,
         int limit,
         Action<IModel, BasicGetResult> callback,
+        Action<MessageActionProgress> progressCallback = null,
         CancellationToken cancellationToken = default
     )
     {
-        return Task.Run(() =>
+        var totalMessageCount = limit;
+        if(limit == 0)
+        {
+            var queueDetails = await _apiClient.GetQueueAsync(queue, _vhost);
+            totalMessageCount = queueDetails.MessagesReady;
+        }
+
+        return await Task.Run(() =>
         {
             using var connection = _amqpConnectionFactory.CreateConnection();
             using var model = connection.CreateModel();
@@ -495,6 +527,14 @@ public class RabbitMqClient
                     callback(model, msg);
                 }
                 messageCount++;
+
+                progressCallback?.Invoke(new MessageActionProgress()
+                {
+                    Affected = passedCount,
+                    Current = messageCount,
+                    Total = totalMessageCount
+                });
+
                 if (limit != 0 && passedCount >= limit)
                 {
                     _logger.LogDebug("Limit of messages to process reached, leaving...");
