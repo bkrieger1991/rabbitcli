@@ -1,7 +1,7 @@
 [![.NET](https://github.com/bkrieger1991/rabbittools/actions/workflows/dotnet.yml/badge.svg)](https://github.com/bkrieger1991/rabbittools/actions/workflows/dotnet.yml)
-[![Publish Windows x64 ZIP](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish-win-x64.yml/badge.svg)](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish-win-x64.yml)
-[![Publish OSX arm64-x64 Universal Bundle](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish-osx-universal.yml/badge.svg)](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish-osx-universal.yml)
-[![Publish Docker Image](https://github.com/bkrieger1991/rabbitcli/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/bkrieger1991/rabbitcli/actions/workflows/docker-publish.yml)
+[![Windows x64 ZIP](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish-win-x64.yml/badge.svg)](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish-win-x64.yml)
+[![OSX arm64 & x64 ZIP](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish-osx-universal.yml/badge.svg)](https://github.com/bkrieger1991/rabbitcli/actions/workflows/dotnet-publish-osx-universal.yml)
+[![Docker Image](https://github.com/bkrieger1991/rabbitcli/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/bkrieger1991/rabbitcli/actions/workflows/docker-publish.yml)
 
 # What is RabbitCLI?
 Rabbit CLI should help you to perform tasks with a RabbitMQ instance, you can't do with the Management UI addon.
@@ -10,7 +10,7 @@ This CLI tool helps fetching messages with extended filter functionality, editin
 
 It allows you to configure more than one instance, to e.g. perform actions on your local development instance as well on your staging or productive environment.
 
-It's written in C# .NET 6.0 and available for download in the branch `releases`.
+It's written in C# .NETCore and available for download in the branch `releases`.
 
 - [What is RabbitCLI?](#what-is-rabbitcli)
 - [RabbitMQ HTTP-Proxy Docker-Image](#rabbitmq-http-proxy-docker-image)
